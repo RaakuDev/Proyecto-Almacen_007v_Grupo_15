@@ -1,0 +1,11 @@
+#API				Qué maneja				Habla con
+1Productos			Nombre, precio, stock, categoría 	Categorías, Inventario
+2Categorías			Nombre, descripción			—
+3Proveedores			Nombre, contacto, RUT			Productos
+4Clientes			Nombre, dirección, teléfono		Ventas
+5Ventas				Fecha, total, cliente			Clientes, Detalle Venta
+6Detalle Venta			Cantidad, precio unitario		Ventas, Productos
+7Inventario			Stock actual, stock mínimo		Productos
+8Empleados			Nombre, cargo, turno			Ventas
+9Pagos				Monto, método, fecha			Ventas		
+10Pedidos			Pedidos a proveedores			Proveedores, Productos

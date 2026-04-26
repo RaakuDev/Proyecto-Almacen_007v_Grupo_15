@@ -1,0 +1,61 @@
+services:
+
+  postgres-categorias:
+    image: postgres:16
+    container_name: postgres-categorias
+    restart: always
+    environment:
+      POSTGRES_DB: categorias_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_categorias_data:/var/lib/postgresql/data
+
+  postgres-productos:
+    image: postgres:16
+    container_name: postgres-productos
+    restart: always
+    environment:
+      POSTGRES_DB: productos_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_productos_data:/var/lib/postgresql/data
+
+  categorias-service:
+    build:
+      context: ./categorias-service
+    container_name: categorias-service
+    restart: always
+    depends_on:
+      - postgres-categorias
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-categorias:5432/categorias_db
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: admin123
+
+  productos-service:
+    build:
+      context: ./productos-service
+    container_name: productos-service
+    restart: always
+    depends_on:
+      - postgres-productos
+      - categorias-service
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-productos:5432/productos_db
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: admin123
+      CATEGORIA_SERVICE_URL: http://categorias-service:8084/api/v1/categorias
+
+volumes:
+  postgres_categorias_data:
+  postgres_productos_data:
