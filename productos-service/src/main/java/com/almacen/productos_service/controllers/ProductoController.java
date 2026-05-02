@@ -1,9 +1,11 @@
 package com.almacen.productos_service.controllers;
 
 import com.almacen.productos_service.dtos.request.ProductoRequest;
-import com.almacen.productos_service.models.ProductoModel;
+import com.almacen.productos_service.dtos.response.ProductoResponse;
 import com.almacen.productos_service.services.ProductoService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,31 +21,29 @@ public class ProductoController {
     }
 
     @GetMapping
-    public List<ProductoModel> obtenerTodos() {
-        return productoService.obtenerTodos();
+    public ResponseEntity<List<ProductoResponse>> obtenerTodos() {
+        return ResponseEntity.ok(productoService.obtenerTodos());
     }
 
     @GetMapping("/{id}")
-    public ProductoModel obtenerPorId(@PathVariable Long id) {
-        return productoService.obtenerPorId(id)
-                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+    public ResponseEntity<ProductoResponse> obtenerPorId(@PathVariable Long id) {
+        return ResponseEntity.ok(productoService.obtenerPorId(id));
     }
 
     @PostMapping
-    public ProductoModel crear(@Valid @RequestBody ProductoRequest request) {
+    public ResponseEntity<ProductoResponse> crear(@Valid @RequestBody ProductoRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(productoService.guardar(request));
+    }
 
-        ProductoModel producto = ProductoModel.builder()
-                .nombre(request.getNombre())
-                .precio(request.getPrecio())
-                .stock(request.getStock())
-                .categoriaId(request.getCategoriaId())
-                .build();
-
-        return productoService.guardar(producto);
+    @PutMapping("/{id}")
+    public ResponseEntity<ProductoResponse> actualizar(@PathVariable Long id,
+                                                       @Valid @RequestBody ProductoRequest request) {
+        return ResponseEntity.ok(productoService.actualizar(id, request));
     }
 
     @DeleteMapping("/{id}")
-    public void eliminar(@PathVariable Long id) {
+    public ResponseEntity<String> eliminar(@PathVariable Long id) {
         productoService.eliminar(id);
+        return ResponseEntity.ok("Producto eliminado");
     }
 }

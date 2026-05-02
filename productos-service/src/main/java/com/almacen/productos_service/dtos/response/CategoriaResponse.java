@@ -1,10 +1,8 @@
 package com.almacen.productos_service.dtos.response;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
-@Getter
-@Setter
+@Data
 public class CategoriaResponse {
 
     private Long id;
