@@ -31,7 +31,7 @@ public class ProductoModel {
 
 
     @Column(nullable = false)
-    private Integer stock;
+    private int stock;
 
     private Long categoriaId;
 

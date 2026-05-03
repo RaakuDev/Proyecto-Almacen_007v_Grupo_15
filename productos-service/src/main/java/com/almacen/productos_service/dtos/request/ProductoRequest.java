@@ -3,11 +3,9 @@ package com.almacen.productos_service.dtos.request;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
-@Getter
-@Setter
+@Data
 public class ProductoRequest {
 
     @NotBlank(message = "El nombre es obligatorio")

@@ -3,6 +3,7 @@ package com.almacen.categorias_service.controllers;
 import com.almacen.categorias_service.dtos.request.CategoriaRequest;
 import com.almacen.categorias_service.dtos.response.CategoriaResponse;
 import com.almacen.categorias_service.services.CategoriaService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,8 +22,8 @@ public class CategoriaController {
 
     // GET ALL
     @GetMapping
-    public List<CategoriaResponse> obtenerTodos() {
-        return categoriaService.obtenerTodos();
+    public ResponseEntity<List<CategoriaResponse>> obtenerTodos() {
+        return ResponseEntity.ok(categoriaService.obtenerTodos());
     }
 
     // GET BY ID
@@ -33,7 +34,7 @@ public class CategoriaController {
 
     // CREATE
     @PostMapping
-    public ResponseEntity<CategoriaResponse> guardar(@RequestBody CategoriaRequest request) {
+    public ResponseEntity<CategoriaResponse> guardar(@Valid @RequestBody CategoriaRequest request) {
         CategoriaResponse nueva = categoriaService.guardar(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(nueva);
     }
@@ -41,7 +42,7 @@ public class CategoriaController {
     // UPDATE
     @PutMapping("/{id}")
     public ResponseEntity<CategoriaResponse> actualizar(@PathVariable Long id,
-                                                        @RequestBody CategoriaRequest request) {
+                                                        @Valid @RequestBody CategoriaRequest request) {
         return ResponseEntity.ok(categoriaService.actualizar(id, request));
     }
 
