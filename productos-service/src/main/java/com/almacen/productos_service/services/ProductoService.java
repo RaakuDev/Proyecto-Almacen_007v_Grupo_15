@@ -7,11 +7,13 @@ import com.almacen.productos_service.exceptions.NotFoundException;
 import com.almacen.productos_service.models.ProductoModel;
 import com.almacen.productos_service.repositories.ProductoRepository;
 import com.almacen.productos_service.webclient.CategoriaClient;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Service
 public class ProductoService {
 
@@ -24,6 +26,7 @@ public class ProductoService {
     }
 
     public List<ProductoResponse> obtenerTodos() {
+        log.info("Obteniendo todos los productos");
         return productoRepository.findAll()
                 .stream()
                 .map(this::mapToResponseConCategoria)
@@ -31,12 +34,14 @@ public class ProductoService {
     }
 
     public ProductoResponse obtenerPorId(Long id) {
+        log.info("Buscando producto con id: {}", id);
         ProductoModel producto = productoRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("No existe el producto con id: " + id));
         return mapToResponseConCategoria(producto);
     }
 
     public ProductoResponse guardar(ProductoRequest request) {
+        log.info("Guardando nuevo producto: {}", request.getNombre());
         CategoriaResponse categoria = obtenerCategoriaDesdeServicio(request.getCategoriaId());
 
         ProductoModel producto = new ProductoModel();
@@ -46,13 +51,17 @@ public class ProductoService {
         producto.setCategoriaId(request.getCategoriaId());
 
         ProductoModel guardado = productoRepository.save(producto);
+        log.info("Categoría guardada con id: {}", guardado.getId());
         return mapToResponse(guardado, categoria);
     }
 
     public ProductoResponse actualizar(Long id, ProductoRequest request) {
+        log.info("Actualizando producto con id: {}", id);
         ProductoModel producto = productoRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("No existe el producto con id: " + id));
-
+                .orElseThrow(() -> {
+                    log.error("No existe el producto con id: {}", id);
+                    return new NotFoundException("No existe el producto con id: " + id);
+                });
         CategoriaResponse categoria = obtenerCategoriaDesdeServicio(request.getCategoriaId());
 
         producto.setNombre(request.getNombre());
@@ -61,19 +70,26 @@ public class ProductoService {
         producto.setCategoriaId(request.getCategoriaId());
 
         ProductoModel actualizado = productoRepository.save(producto);
+        log.info("Producto actualizado con id: {}", actualizado.getId());
         return mapToResponse(actualizado, categoria);
     }
 
     public void eliminar(Long id) {
+        log.info("Eliminando producto con id: {}", id);
         ProductoModel producto = productoRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("No existe el producto con id: " + id));
+                .orElseThrow(() -> {
+                    log.error("No existe el producto con id: {}", id);
+                    return new NotFoundException("No existe el producto con id: " + id);
+                });
         productoRepository.delete(producto);
+        log.info("producto eliminado con id: {}", id);
     }
 
     private CategoriaResponse obtenerCategoriaDesdeServicio(Long categoriaId) {
         try {
             return categoriaClient.obtenerCatPorId(categoriaId);
         } catch (Exception e) {
+            log.error("No existe la categoría con id: {}", categoriaId);
             throw new NotFoundException("No existe la categoría con id: " + categoriaId);
         }
     }

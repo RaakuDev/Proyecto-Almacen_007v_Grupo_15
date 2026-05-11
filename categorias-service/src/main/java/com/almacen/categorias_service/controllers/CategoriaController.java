@@ -4,12 +4,14 @@ import com.almacen.categorias_service.dtos.request.CategoriaRequest;
 import com.almacen.categorias_service.dtos.response.CategoriaResponse;
 import com.almacen.categorias_service.services.CategoriaService;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/categorias")
 public class CategoriaController {
