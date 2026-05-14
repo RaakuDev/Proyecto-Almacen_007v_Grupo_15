@@ -2,7 +2,7 @@
 <project version="4">
   <component name="CompilerConfiguration">
     <annotationProcessing>
-      <profile name="Annotation profile for inventario-service" enabled="true">
+      <profile name="Annotation profile for productos-service" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
@@ -13,13 +13,27 @@
         <module name="inventario-service" />
         <module name="productos-service" />
       </profile>
+      <profile name="Annotation profile for clientes-service" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.46/lombok-1.18.46.jar" />
+        </processorPath>
+        <module name="clientes-service" />
+        <module name="ventas-service" />
+        <module name="DetalleVentas-service" />
+      </profile>
     </annotationProcessing>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="DetalleVentas-service" options="-parameters" />
       <module name="categorias-service" options="-parameters" />
+      <module name="clientes-service" options="-parameters" />
       <module name="inventario-service" options="-parameters" />
       <module name="productos-service" options="-parameters" />
+      <module name="ventas-service" options="-parameters" />
     </option>
   </component>
 </project>
