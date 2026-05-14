@@ -39,6 +39,45 @@ services:
     volumes:
       - postgres_inventario_data:/var/lib/postgresql/data
 
+  postgres-clientes:
+    image: postgres:16
+    container_name: postgres-clientes
+    restart: always
+    environment:
+      POSTGRES_DB: clientes_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "5437:5432"
+    volumes:
+      - postgres_clientes_data:/var/lib/postgresql/data
+
+  postgres-ventas:
+    image: postgres:16
+    container_name: postgres-ventas
+    restart: always
+    environment:
+      POSTGRES_DB: ventas_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "5438:5432"
+    volumes:
+      - postgres_ventas_data:/var/lib/postgresql/data
+
+  postgres-detalle-venta:
+    image: postgres:16
+    container_name: postgres-detalle-venta
+    restart: always
+    environment:
+      POSTGRES_DB: detalle_venta_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "5439:5432"
+    volumes:
+      - postgres_detalle_venta_data:/var/lib/postgresql/data
+
   categorias-service:
     build:
       context: ./categorias-service
@@ -85,7 +124,59 @@ services:
       SPRING_DATASOURCE_PASSWORD: admin123
       PRODUCTO_SERVICE_URL: http://productos-service:8085/api/v1/productos
 
+  clientes-service:
+    build:
+      context: ./clientes-service
+    container_name: clientes-service
+    restart: always
+    depends_on:
+      - postgres-clientes
+    ports:
+      - "8087:8087"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-clientes:5432/clientes_db
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: admin123
+
+  ventas-service:
+    build:
+      context: ./ventas-service
+    container_name: ventas-service
+    restart: always
+    depends_on:
+      - postgres-ventas
+      - clientes-service
+    ports:
+      - "8088:8088"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-ventas:5432/ventas_db
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: admin123
+      CLIENTES_SERVICE_URL: http://clientes-service:8087/api/v1/clientes
+      DETALLEVENTAS_SERVICE_URL: http://detalle-venta-service:8089/api/v1/detalles
+
+  detalle-venta-service:
+    build:
+      context: ./DetalleVentas-service
+    container_name: detalle-venta-service
+    restart: always
+    depends_on:
+      - postgres-detalle-venta
+      - productos-service
+      - ventas-service
+    ports:
+      - "8089:8089"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-detalle-venta:5432/detalle_venta_db
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: admin123
+      PRODUCTO_SERVICE_URL: http://productos-service:8085/api/v1/productos
+      VENTA_SERVICE_URL: http://ventas-service:8088/api/v1/ventas
+
 volumes:
   postgres_categorias_data:
   postgres_productos_data:
   postgres_inventario_data:
+  postgres_clientes_data:
+  postgres_ventas_data:
+  postgres_detalle_venta_data:
