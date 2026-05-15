@@ -1,10 +1,14 @@
 package com.almacen.inventario_service.security;
 
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -19,19 +23,37 @@ public class SecurityConfig {
 
         return http
                 .csrf(csrf -> csrf.disable())
+
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
+
                 .authorizeHttpRequests(auth -> auth
-                        //esta es la lista de endpoints que sepueden usar sin token
-                        .requestMatchers("/auth/login").permitAll()
-                        //esta es la lista de endpoints privados
+
+                        // Ver inventario: ADMIN y SUPERVISOR
+                        .requestMatchers(HttpMethod.GET, "/api/v1/inventario/**")
+                        .hasAnyRole("ADMIN", "SUPERVISOR")
+
+                        // Crear inventario: ADMIN y SUPERVISOR
+                        .requestMatchers(HttpMethod.POST, "/api/v1/inventario/**")
+                        .hasAnyRole("ADMIN", "SUPERVISOR")
+
+                        // Actualizar inventario: ADMIN y SUPERVISOR
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/inventario/**")
+                        .hasAnyRole("ADMIN", "SUPERVISOR")
+
+                        // Eliminar inventario: solo ADMIN
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/inventario/**")
+                        .hasRole("ADMIN")
+
                         .anyRequest().authenticated()
                 )
+
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
                 )
+
                 .build();
-    }
+        }
 }

@@ -1,5 +1,4 @@
 services:
-
   postgres-categorias:
     image: postgres:16
     container_name: postgres-categorias
@@ -12,6 +11,20 @@ services:
       - "5434:5432"
     volumes:
       - postgres_categorias_data:/var/lib/postgresql/data
+
+  postgres-usuarios:
+    image: postgres:16
+    container_name: postgres-usuarios
+    restart: always
+    environment:
+      POSTGRES_DB: usuario_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    ports: 
+    - "5435:5432"
+    volumes:
+    - postgres_categorias_data:/var/lib/postgresql/data
+    
 
   postgres-productos:
     image: postgres:16
@@ -91,6 +104,22 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-categorias:5432/categorias_db
       SPRING_DATASOURCE_USERNAME: admin
       SPRING_DATASOURCE_PASSWORD: admin123
+
+  usuarios-service:
+    build:
+      context: ./usuarios-service
+    container_name: usuarios-service
+    restart: always
+    depends_on:
+      - postgres-usuarios
+    ports:
+      - "8093:8093"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-productos:5432/usuarios_db
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: admin123
+      CATEGORIA_SERVICE_URL: http://categorias-service:8084/api/v1/usuarios
+
 
   productos-service:
     build:
@@ -173,6 +202,7 @@ services:
       PRODUCTO_SERVICE_URL: http://productos-service:8085/api/v1/productos
       VENTA_SERVICE_URL: http://ventas-service:8088/api/v1/ventas
 
+
 volumes:
   postgres_categorias_data:
   postgres_productos_data:
@@ -180,3 +210,4 @@ volumes:
   postgres_clientes_data:
   postgres_ventas_data:
   postgres_detalle_venta_data:
+  postgres_usuarios_data:

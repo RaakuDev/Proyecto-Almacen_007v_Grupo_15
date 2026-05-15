@@ -14,6 +14,9 @@ import com.almacen.DetalleVentas.repositories.DetalleRepository;
 import com.almacen.DetalleVentas.webclient.ProductoClient;
 import com.almacen.DetalleVentas.webclient.VentasClient;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 public class DetalleService {
 
@@ -30,6 +33,9 @@ public class DetalleService {
     }
 
     public List<DetalleResponse> obtenerTodos() {
+
+        log.info("Obteniendo todos los detalles de venta");
+
         return detalleRepository.findAll()
                 .stream()
                 .map(this::toResponse)
@@ -37,12 +43,25 @@ public class DetalleService {
     }
 
     public DetalleResponse obtenerPorId(Long id) {
+
+        log.info("Buscando detalle de venta con ID: {}", id);
+
         return detalleRepository.findById(id)
                 .map(this::toResponse)
-                .orElseThrow(() -> new NotFoundException("Detalle de venta no encontrado con ID: " + id));
+                .orElseThrow(() -> {
+
+                    log.error("Detalle de venta no encontrado con ID: {}", id);
+
+                    return new NotFoundException(
+                            "Detalle de venta no encontrado con ID: " + id
+                    );
+                });
     }
 
     public List<DetalleResponse> obtenerPorVentaId(Long ventaId) {
+
+        log.info("Obteniendo detalles asociados a la venta ID: {}", ventaId);
+
         return detalleRepository.findByVentaId(ventaId)
                 .stream()
                 .map(this::toResponse)
@@ -51,9 +70,20 @@ public class DetalleService {
 
     public DetalleResponse guardar(DetalleRequest request) {
 
+        log.info(
+                "Guardando detalle de venta para venta ID: {} y producto ID: {}",
+                request.getVentaId(),
+                request.getProductoId()
+        );
+
         ventasClient.validarVenta(request.getVentaId());
 
-        ProductoResponse producto = productoClient.obtenerProducto(request.getProductoId());
+        log.info("Venta validada correctamente con ID: {}", request.getVentaId());
+
+        ProductoResponse producto =
+                productoClient.obtenerProducto(request.getProductoId());
+
+        log.info("Producto obtenido correctamente con ID: {}", request.getProductoId());
 
         BigDecimal subTotal = BigDecimal.valueOf(producto.getPrecio())
                 .multiply(BigDecimal.valueOf(request.getCantidad()));
@@ -66,16 +96,38 @@ public class DetalleService {
                 .subTotal(subTotal)
                 .build();
 
-        return toResponse(detalleRepository.save(detalle));
+        DetalleModel guardado = detalleRepository.save(detalle);
+
+        log.info(
+                "Detalle de venta guardado correctamente con ID: {}",
+                guardado.getIdDetalleVenta()
+        );
+
+        return toResponse(guardado);
     }
 
     public DetalleResponse actualizar(Long id, DetalleRequest request) {
+
+        log.info("Actualizando detalle de venta con ID: {}", id);
+
         DetalleModel detalle = detalleRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Detalle de venta no encontrado con ID: " + id));
+                .orElseThrow(() -> {
+
+                    log.error("Detalle de venta no encontrado con ID: {}", id);
+
+                    return new NotFoundException(
+                            "Detalle de venta no encontrado con ID: " + id
+                    );
+                });
 
         ventasClient.validarVenta(request.getVentaId());
 
-        ProductoResponse producto = productoClient.obtenerProducto(request.getProductoId());
+        log.info("Venta validada correctamente con ID: {}", request.getVentaId());
+
+        ProductoResponse producto =
+                productoClient.obtenerProducto(request.getProductoId());
+
+        log.info("Producto obtenido correctamente con ID: {}", request.getProductoId());
 
         BigDecimal subTotal = BigDecimal.valueOf(producto.getPrecio())
                 .multiply(BigDecimal.valueOf(request.getCantidad()));
@@ -86,17 +138,37 @@ public class DetalleService {
         detalle.setPrecioUnitario(BigDecimal.valueOf(producto.getPrecio()));
         detalle.setSubTotal(subTotal);
 
-        return toResponse(detalleRepository.save(detalle));
+        DetalleModel actualizado = detalleRepository.save(detalle);
+
+        log.info(
+                "Detalle de venta actualizado correctamente con ID: {}",
+                actualizado.getIdDetalleVenta()
+        );
+
+        return toResponse(actualizado);
     }
 
     public void eliminar(Long id) {
+
+        log.info("Eliminando detalle de venta con ID: {}", id);
+
         DetalleModel detalle = detalleRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Detalle de venta no encontrado con ID: " + id));
+                .orElseThrow(() -> {
+
+                    log.error("Detalle de venta no encontrado con ID: {}", id);
+
+                    return new NotFoundException(
+                            "Detalle de venta no encontrado con ID: " + id
+                    );
+                });
 
         detalleRepository.delete(detalle);
+
+        log.info("Detalle de venta eliminado correctamente con ID: {}", id);
     }
 
     private DetalleResponse toResponse(DetalleModel detalle) {
+
         return DetalleResponse.builder()
                 .idDetalle(detalle.getIdDetalleVenta())
                 .ventaId(detalle.getVentaId())
