@@ -16,6 +16,9 @@ import com.almacen.ventas.repositories.VentasRepository;
 import com.almacen.ventas.webclient.ClienteClient;
 import com.almacen.ventas.webclient.DetalleVentaClient;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 public class VentasServices {
 
@@ -34,6 +37,9 @@ public class VentasServices {
     }
 
     public List<VentasResponse> obtenerTodas() {
+
+        log.info("Obteniendo todas las ventas");
+
         return ventasRepository.findAll()
                 .stream()
                 .map(this::toResponse)
@@ -41,14 +47,28 @@ public class VentasServices {
     }
 
     public VentasResponse obtenerPorId(Long id) {
+
+        log.info("Buscando venta con ID: {}", id);
+
         return ventasRepository.findById(id)
                 .map(this::toResponse)
-                .orElseThrow(() -> new NotFoundException("No existe la venta con ID: " + id));
+                .orElseThrow(() -> {
+
+                    log.error("No existe la venta con ID: {}", id);
+
+                    return new NotFoundException(
+                            "No existe la venta con ID: " + id
+                    );
+                });
     }
 
     public VentasResponse guardar(VentasRequest request) {
 
+        log.info("Guardando nueva venta para cliente ID: {}", request.getClienteID());
+
         clienteClient.validarCliente(request.getClienteID());
+
+        log.info("Cliente validado correctamente con ID: {}", request.getClienteID());
 
         VentasModel venta = VentasModel.builder()
                 .fechaVenta(LocalDateTime.now())
@@ -67,14 +87,30 @@ public class VentasServices {
                 .observaciones(request.getObservaciones())
                 .build();
 
-        return toResponse(ventasRepository.save(venta));
+        VentasModel guardada = ventasRepository.save(venta);
+
+        log.info("Venta guardada correctamente con ID: {}", guardada.getIdVenta());
+
+        return toResponse(guardada);
     }
 
     public VentasResponse actualizar(Long id, VentasRequest request) {
+
+        log.info("Actualizando venta con ID: {}", id);
+
         VentasModel venta = ventasRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("No existe la venta con ID: " + id));
+                .orElseThrow(() -> {
+
+                    log.error("No existe la venta con ID: {}", id);
+
+                    return new NotFoundException(
+                            "No existe la venta con ID: " + id
+                    );
+                });
 
         clienteClient.validarCliente(request.getClienteID());
+
+        log.info("Cliente validado correctamente con ID: {}", request.getClienteID());
 
         venta.setSubTotal(request.getSubTotal());
         venta.setDescuentoTotal(request.getDescuentoTotal());
@@ -89,14 +125,31 @@ public class VentasServices {
         venta.setNumeroComprobante(request.getNumeroComprobante());
         venta.setObservaciones(request.getObservaciones());
 
-        return toResponse(ventasRepository.save(venta));
+        VentasModel actualizada = ventasRepository.save(venta);
+
+        log.info("Venta actualizada correctamente con ID: {}", actualizada.getIdVenta());
+
+        return toResponse(actualizada);
     }
 
     public VentasResponse recalcularTotal(Long idVenta) {
-        VentasModel venta = ventasRepository.findById(idVenta)
-                .orElseThrow(() -> new NotFoundException("No existe la venta con ID: " + idVenta));
 
-        List<DetalleVentaResponse> detalles = detalleVentaClient.obtenerDetallesPorVenta(idVenta);
+        log.info("Recalculando total de venta con ID: {}", idVenta);
+
+        VentasModel venta = ventasRepository.findById(idVenta)
+                .orElseThrow(() -> {
+
+                    log.error("No existe la venta con ID: {}", idVenta);
+
+                    return new NotFoundException(
+                            "No existe la venta con ID: " + idVenta
+                    );
+                });
+
+        List<DetalleVentaResponse> detalles =
+                detalleVentaClient.obtenerDetallesPorVenta(idVenta);
+
+        log.info("Detalles obtenidos correctamente para venta ID: {}", idVenta);
 
         BigDecimal subTotal = detalles.stream()
                 .map(DetalleVentaResponse::getSubTotal)
@@ -114,17 +167,34 @@ public class VentasServices {
         venta.setImpuestoTotal(impuesto);
         venta.setTotal(total);
 
-        return toResponse(ventasRepository.save(venta));
+        VentasModel recalculada = ventasRepository.save(venta);
+
+        log.info("Venta recalculada correctamente con ID: {}", recalculada.getIdVenta());
+
+        return toResponse(recalculada);
     }
 
     public void eliminar(Long id) {
+
+        log.info("Eliminando venta con ID: {}", id);
+
         VentasModel venta = ventasRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("No existe la venta con ID: " + id));
+                .orElseThrow(() -> {
+
+                    log.error("No existe la venta con ID: {}", id);
+
+                    return new NotFoundException(
+                            "No existe la venta con ID: " + id
+                    );
+                });
 
         ventasRepository.delete(venta);
+
+        log.info("Venta eliminada correctamente con ID: {}", id);
     }
 
     private VentasResponse toResponse(VentasModel venta) {
+
         return VentasResponse.builder()
                 .idVenta(venta.getIdVenta())
                 .fechaVenta(venta.getFechaVenta())

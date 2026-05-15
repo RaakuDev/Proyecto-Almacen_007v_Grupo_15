@@ -1,4 +1,4 @@
-package com.almacen.clientes.dtos.request;
+package com.almacen.usuarios.dtos.request;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
@@ -9,6 +9,6 @@ public class LoginRequest {
     @NotBlank(message = "El username es obligatorio")
     private String username;
 
-    @NotBlank(message = "El password es obligatorio")
+    @NotBlank(message = "La password es obligatoria")
     private String password;
 }

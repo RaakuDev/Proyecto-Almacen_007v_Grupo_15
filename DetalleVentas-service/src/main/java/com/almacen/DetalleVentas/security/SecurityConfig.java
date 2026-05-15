@@ -1,17 +1,20 @@
 package com.almacen.DetalleVentas.security;
 
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import lombok.RequiredArgsConstructor;
-
 @Configuration
 @RequiredArgsConstructor
-public class SegurityConfig {
+public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
@@ -20,20 +23,39 @@ public class SegurityConfig {
 
         return http
                 .csrf(csrf -> csrf.disable())
+
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
+
                 .authorizeHttpRequests(auth -> auth
-                        //esta es la lista de endpoints que sepueden usar sin token
-                        .requestMatchers("/auth/login").permitAll()
-                        //esta es la lista de endpoints privados
+
+                        // Ver detalles: ADMIN, CAJERO y SUPERVISOR
+                        .requestMatchers(HttpMethod.GET, "/api/v1/detalles/**")
+                        .hasAnyRole("ADMIN", "CAJERO", "SUPERVISOR")
+
+                        // Crear detalle: ADMIN y CAJERO
+                        // porque al generar una venta también puede necesitar registrar detalle
+                        .requestMatchers(HttpMethod.POST, "/api/v1/detalles/**")
+                        .hasAnyRole("ADMIN", "CAJERO")
+
+                        // Modificar detalle: solo ADMIN
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/detalles/**")
+                        .hasRole("ADMIN")
+
+                        // Eliminar detalle: solo ADMIN
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/detalles/**")
+                        .hasRole("ADMIN")
+
+                        // Todo lo demás requiere token
                         .anyRequest().authenticated()
                 )
+
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
                 )
+
                 .build();
     }
-
 }
