@@ -2,6 +2,7 @@ package com.almacen.ventas.dtos.response;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import com.almacen.ventas.enums.EstadoVentas;
 import com.almacen.ventas.enums.MetodoDePago;
@@ -25,8 +26,9 @@ public class VentasResponse {
     private BigDecimal montoPagado;
     private BigDecimal vuelto;
     private EstadoVentas estadoVenta;
-    private Long clienteID;
+    private Long clienteId;
     private Long empleadoId;
     private String numeroComprobante;
     private String observaciones;
+    private List<DetalleVentaResponse> detalles;
 }

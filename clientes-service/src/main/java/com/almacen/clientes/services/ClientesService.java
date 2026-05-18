@@ -2,9 +2,11 @@ package com.almacen.clientes.services;
 
 import com.almacen.clientes.dtos.request.ClientesRequest;
 import com.almacen.clientes.dtos.response.ClientesResponse;
+import com.almacen.clientes.dtos.response.PedidoResponse;
 import com.almacen.clientes.exceptions.NotFoundException;
 import com.almacen.clientes.models.ClientesModel;
 import com.almacen.clientes.repositories.ClientesRepository;
+import com.almacen.clientes.webclient.PedidoClient;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -17,14 +19,14 @@ import java.util.List;
 public class ClientesService {
 
     private final ClientesRepository clientesRepository;
+    private final PedidoClient pedidoClient;
 
-    public ClientesService(ClientesRepository clientesRepository) {
+    public ClientesService(ClientesRepository clientesRepository, PedidoClient pedidoClient) {
         this.clientesRepository = clientesRepository;
+        this.pedidoClient = pedidoClient;
     }
 
-    // Obtener todos
     public List<ClientesResponse> obtenerTodos() {
-
         log.info("Obteniendo todos los clientes");
 
         return clientesRepository.findAll()
@@ -33,26 +35,30 @@ public class ClientesService {
                 .toList();
     }
 
-    // Obtener por ID
     public ClientesResponse obtenerPorId(Long id) {
-
         log.info("Buscando cliente con ID: {}", id);
 
         return clientesRepository.findById(id)
                 .map(this::toResponse)
                 .orElseThrow(() -> {
-
                     log.error("No existe el cliente con ID: {}", id);
-
-                    return new NotFoundException(
-                            "No existe el cliente con id: " + id
-                    );
+                    return new NotFoundException("No existe el cliente con id: " + id);
                 });
     }
 
-    // Crear cliente
-    public ClientesResponse guardar(ClientesRequest request) {
+    public List<PedidoResponse> obtenerPedidosDelCliente(Long clienteId) {
+        log.info("Buscando pedidos del cliente con ID: {}", clienteId);
 
+        clientesRepository.findById(clienteId)
+                .orElseThrow(() -> {
+                    log.error("No existe el cliente con ID: {}", clienteId);
+                    return new NotFoundException("No existe el cliente con id: " + clienteId);
+                });
+
+        return pedidoClient.obtenerPedidosPorCliente(clienteId);
+    }
+
+    public ClientesResponse guardar(ClientesRequest request) {
         log.info("Guardando nuevo cliente con rut: {}", request.getRut());
 
         ClientesModel cliente = new ClientesModel();
@@ -70,19 +76,13 @@ public class ClientesService {
         return toResponse(guardado);
     }
 
-    // Actualizar cliente
     public ClientesResponse actualizar(Long id, ClientesRequest request) {
-
         log.info("Actualizando cliente con ID: {}", id);
 
         ClientesModel cliente = clientesRepository.findById(id)
                 .orElseThrow(() -> {
-
                     log.error("No existe el cliente con ID: {}", id);
-
-                    return new NotFoundException(
-                            "No existe el cliente con id: " + id
-                    );
+                    return new NotFoundException("No existe el cliente con id: " + id);
                 });
 
         cliente.setNombre(request.getNombre());
@@ -98,19 +98,13 @@ public class ClientesService {
         return toResponse(actualizado);
     }
 
-    // Eliminar cliente
     public void eliminar(Long id) {
-
         log.info("Eliminando cliente con ID: {}", id);
 
         ClientesModel cliente = clientesRepository.findById(id)
                 .orElseThrow(() -> {
-
                     log.error("No existe el cliente con ID: {}", id);
-
-                    return new NotFoundException(
-                            "No existe el cliente con id: " + id
-                    );
+                    return new NotFoundException("No existe el cliente con id: " + id);
                 });
 
         clientesRepository.delete(cliente);
@@ -118,9 +112,7 @@ public class ClientesService {
         log.info("Cliente eliminado correctamente con ID: {}", id);
     }
 
-    // Mapper
     private ClientesResponse toResponse(ClientesModel cliente) {
-
         return ClientesResponse.builder()
                 .id(cliente.getId())
                 .nombre(cliente.getNombre())

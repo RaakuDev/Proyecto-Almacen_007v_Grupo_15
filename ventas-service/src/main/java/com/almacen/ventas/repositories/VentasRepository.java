@@ -1,11 +1,13 @@
 package com.almacen.ventas.repositories;
 
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 import com.almacen.ventas.models.VentasModel;
 
-@Repository
-public interface VentasRepository extends JpaRepository<VentasModel, Long>{
+public interface VentasRepository extends JpaRepository<VentasModel, Long> {
+
+    Optional<VentasModel> findByNumeroComprobante(String numeroComprobante);
 
 }

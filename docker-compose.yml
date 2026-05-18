@@ -1,4 +1,5 @@
 services:
+
   postgres-categorias:
     image: postgres:16
     container_name: postgres-categorias
@@ -11,20 +12,6 @@ services:
       - "5434:5432"
     volumes:
       - postgres_categorias_data:/var/lib/postgresql/data
-
-  postgres-usuarios:
-    image: postgres:16
-    container_name: postgres-usuarios
-    restart: always
-    environment:
-      POSTGRES_DB: usuario_db
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin123
-    ports: 
-    - "5435:5432"
-    volumes:
-    - postgres_categorias_data:/var/lib/postgresql/data
-    
 
   postgres-productos:
     image: postgres:16
@@ -91,6 +78,72 @@ services:
     volumes:
       - postgres_detalle_venta_data:/var/lib/postgresql/data
 
+  postgres-proveedores:
+    image: postgres:16
+    container_name: postgres-proveedores
+    restart: always
+    environment:
+      POSTGRES_DB: proveedores_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "5441:5432"
+    volumes:
+      - postgres_proveedores_data:/var/lib/postgresql/data
+
+  postgres-empleados:
+    image: postgres:16
+    container_name: postgres-empleados
+    restart: always
+    environment:
+      POSTGRES_DB: empleados_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "5442:5432"
+    volumes:
+      - postgres_empleados_data:/var/lib/postgresql/data
+
+  postgres-pedidos:
+    image: postgres:16
+    container_name: postgres-pedidos
+    restart: always
+    environment:
+      POSTGRES_DB: pedidos_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "5443:5432"
+    volumes:
+      - postgres_pedidos_data:/var/lib/postgresql/data
+
+  postgres-usuarios:
+    image: postgres:16
+    container_name: postgres-usuarios
+    restart: always
+    environment:
+      POSTGRES_DB: usuarios_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "5444:5432"
+    volumes:
+      - postgres_usuarios_data:/var/lib/postgresql/data
+
+  usuarios-service:
+    build:
+      context: ./usuarios-service
+    container_name: usuarios-service
+    restart: always
+    depends_on:
+      - postgres-usuarios
+    ports:
+      - "8093:8093"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-usuarios:5432/usuarios_db
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: admin123
+
   categorias-service:
     build:
       context: ./categorias-service
@@ -105,22 +158,6 @@ services:
       SPRING_DATASOURCE_USERNAME: admin
       SPRING_DATASOURCE_PASSWORD: admin123
 
-  usuarios-service:
-    build:
-      context: ./usuarios-service
-    container_name: usuarios-service
-    restart: always
-    depends_on:
-      - postgres-usuarios
-    ports:
-      - "8093:8093"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-productos:5432/usuarios_db
-      SPRING_DATASOURCE_USERNAME: admin
-      SPRING_DATASOURCE_PASSWORD: admin123
-      CATEGORIA_SERVICE_URL: http://categorias-service:8084/api/v1/usuarios
-
-
   productos-service:
     build:
       context: ./productos-service
@@ -129,13 +166,15 @@ services:
     depends_on:
       - postgres-productos
       - categorias-service
+      - inventario-service
     ports:
       - "8085:8085"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-productos:5432/productos_db
       SPRING_DATASOURCE_USERNAME: admin
       SPRING_DATASOURCE_PASSWORD: admin123
-      CATEGORIA_SERVICE_URL: http://categorias-service:8084/api/v1/categorias
+      CATEGORIA_SERVICE_URL: http://categorias-service:8084
+      INVENTARIO_SERVICE_URL: http://inventario-service:8090
 
   inventario-service:
     build:
@@ -144,14 +183,28 @@ services:
     restart: always
     depends_on:
       - postgres-inventario
-      - productos-service
     ports:
       - "8090:8090"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-inventario:5432/inventario_db
       SPRING_DATASOURCE_USERNAME: admin
       SPRING_DATASOURCE_PASSWORD: admin123
-      PRODUCTO_SERVICE_URL: http://productos-service:8085/api/v1/productos
+      PRODUCTO_SERVICE_URL: http://productos-service:8085
+
+  proveedores-service:
+    build:
+      context: ./proveedores-service
+    container_name: proveedores-service
+    restart: always
+    depends_on:
+      - postgres-proveedores
+    ports:
+      - "8086:8086"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-proveedores:5432/proveedores_db
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: admin123
+      PRODUCTO_SERVICE_URL: http://productos-service:8085
 
   clientes-service:
     build:
@@ -166,6 +219,22 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-clientes:5432/clientes_db
       SPRING_DATASOURCE_USERNAME: admin
       SPRING_DATASOURCE_PASSWORD: admin123
+      PEDIDO_SERVICE_URL: http://pedidos-service:8092
+
+  empleados-service:
+    build:
+      context: ./empleados-service
+    container_name: empleados-service
+    restart: always
+    depends_on:
+      - postgres-empleados
+    ports:
+      - "8091:8091"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-empleados:5432/empleados_db
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: admin123
+      VENTA_SERVICE_URL: http://ventas-service:8088
 
   ventas-service:
     build:
@@ -181,8 +250,8 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-ventas:5432/ventas_db
       SPRING_DATASOURCE_USERNAME: admin
       SPRING_DATASOURCE_PASSWORD: admin123
-      CLIENTES_SERVICE_URL: http://clientes-service:8087/api/v1/clientes
-      DETALLEVENTAS_SERVICE_URL: http://detalle-venta-service:8089/api/v1/detalles
+      CLIENTES_SERVICE_URL: http://clientes-service:8087
+      DETALLEVENTAS_SERVICE_URL: http://detalle-venta-service:8089
 
   detalle-venta-service:
     build:
@@ -191,6 +260,7 @@ services:
     restart: always
     depends_on:
       - postgres-detalle-venta
+      - inventario-service
       - productos-service
       - ventas-service
     ports:
@@ -199,9 +269,27 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-detalle-venta:5432/detalle_venta_db
       SPRING_DATASOURCE_USERNAME: admin
       SPRING_DATASOURCE_PASSWORD: admin123
-      PRODUCTO_SERVICE_URL: http://productos-service:8085/api/v1/productos
-      VENTA_SERVICE_URL: http://ventas-service:8088/api/v1/ventas
+      PRODUCTO_SERVICE_URL: http://productos-service:8085
+      VENTA_SERVICE_URL: http://ventas-service:8088
+      INVENTARIO_SERVICE_URL: http://inventario-service:8090
 
+  pedidos-service:
+    build:
+      context: ./pedidos-service
+    container_name: pedidos-service
+    restart: always
+    depends_on:
+      - postgres-pedidos
+      - proveedores-service
+      - productos-service
+    ports:
+      - "8092:8092"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-pedidos:5432/pedidos_db
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: admin123
+      PROVEEDOR_SERVICE_URL: http://proveedores-service:8086
+      PRODUCTO_SERVICE_URL: http://productos-service:8085
 
 volumes:
   postgres_categorias_data:
@@ -210,4 +298,7 @@ volumes:
   postgres_clientes_data:
   postgres_ventas_data:
   postgres_detalle_venta_data:
+  postgres_proveedores_data:
+  postgres_empleados_data:
+  postgres_pedidos_data:
   postgres_usuarios_data:

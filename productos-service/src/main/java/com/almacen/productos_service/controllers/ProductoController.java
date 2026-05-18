@@ -30,14 +30,28 @@ public class ProductoController {
         return ResponseEntity.ok(productoService.obtenerPorId(id));
     }
 
+    @GetMapping("/categoria/{categoriaId}")
+    public ResponseEntity<List<ProductoResponse>> obtenerPorCategoria(@PathVariable Long categoriaId) {
+        return ResponseEntity.ok(productoService.obtenerPorCategoria(categoriaId));
+    }
+
+    @GetMapping("/proveedor/{proveedorId}")
+    public ResponseEntity<List<ProductoResponse>> obtenerPorProveedor(@PathVariable Long proveedorId) {
+        return ResponseEntity.ok(productoService.obtenerPorProveedor(proveedorId));
+    }
+
+    
+
     @PostMapping
     public ResponseEntity<ProductoResponse> crear(@Valid @RequestBody ProductoRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(productoService.guardar(request));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ProductoResponse> actualizar(@PathVariable Long id,
-                                                       @Valid @RequestBody ProductoRequest request) {
+    public ResponseEntity<ProductoResponse> actualizar(
+            @PathVariable Long id,
+            @Valid @RequestBody ProductoRequest request
+    ) {
         return ResponseEntity.ok(productoService.actualizar(id, request));
     }
 

@@ -7,18 +7,21 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Component
 public class ClienteClient {
 
-    private final WebClient webClient;
+    private final WebClient.Builder webClientBuilder;
+    private final String clienteServiceUrl;
 
-    public ClienteClient(@Value("${cliente-service.url}") String urlBase) {
-        this.webClient = WebClient.builder()
-                .baseUrl(urlBase)
-                .build();
+    public ClienteClient(
+            WebClient.Builder webClientBuilder,
+            @Value("${cliente-service.url}") String clienteServiceUrl
+    ) {
+        this.webClientBuilder = webClientBuilder;
+        this.clienteServiceUrl = clienteServiceUrl;
     }
 
-    // 🔹 Validar que el cliente existe
     public void validarCliente(Long id) {
-        webClient.get()
-                .uri("/{id}", id)
+        webClientBuilder.build()
+                .get()
+                .uri(clienteServiceUrl + "/api/v1/clientes/" + id)
                 .retrieve()
                 .toBodilessEntity()
                 .block();

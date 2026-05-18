@@ -29,15 +29,13 @@ public class VentasServices {
     public VentasServices(
             VentasRepository ventasRepository,
             ClienteClient clienteClient,
-            DetalleVentaClient detalleVentaClient
-    ) {
+            DetalleVentaClient detalleVentaClient) {
         this.ventasRepository = ventasRepository;
         this.clienteClient = clienteClient;
         this.detalleVentaClient = detalleVentaClient;
     }
 
     public List<VentasResponse> obtenerTodas() {
-
         log.info("Obteniendo todas las ventas");
 
         return ventasRepository.findAll()
@@ -47,41 +45,44 @@ public class VentasServices {
     }
 
     public VentasResponse obtenerPorId(Long id) {
-
         log.info("Buscando venta con ID: {}", id);
 
         return ventasRepository.findById(id)
                 .map(this::toResponse)
                 .orElseThrow(() -> {
-
                     log.error("No existe la venta con ID: {}", id);
-
-                    return new NotFoundException(
-                            "No existe la venta con ID: " + id
-                    );
+                    return new NotFoundException("No existe la venta con ID: " + id);
                 });
     }
 
     public VentasResponse guardar(VentasRequest request) {
 
-        log.info("Guardando nueva venta para cliente ID: {}", request.getClienteID());
+        log.info("Guardando nueva venta");
 
-        clienteClient.validarCliente(request.getClienteID());
+        if (request.getClienteId() != null) {
 
-        log.info("Cliente validado correctamente con ID: {}", request.getClienteID());
+            clienteClient.validarCliente(request.getClienteId());
+
+            log.info("Cliente validado correctamente con ID: {}",
+                    request.getClienteId());
+
+        } else {
+
+            log.info("Venta sin cliente asociado");
+        }
 
         VentasModel venta = VentasModel.builder()
                 .fechaVenta(LocalDateTime.now())
-                .subTotal(request.getSubTotal())
-                .descuentoTotal(request.getDescuentoTotal())
-                .impuestoTotal(request.getImpuestoTotal())
-                .total(request.getTotal())
+                .subTotal(BigDecimal.ZERO)
+                .descuentoTotal(BigDecimal.ZERO)
+                .impuestoTotal(BigDecimal.ZERO)
+                .total(BigDecimal.ZERO)
                 .metodoPago(request.getMetodoPago())
                 .tipoComprobante(request.getTipoComprobante())
                 .montoPagado(request.getMontoPagado())
-                .vuelto(request.getVuelto())
+                .vuelto(BigDecimal.ZERO)
                 .estadoVenta(EstadoVentas.COMPLETADA)
-                .clienteID(request.getClienteID())
+                .clienteId(request.getClienteId())
                 .empleadoId(request.getEmpleadoId())
                 .numeroComprobante(request.getNumeroComprobante())
                 .observaciones(request.getObservaciones())
@@ -89,28 +90,41 @@ public class VentasServices {
 
         VentasModel guardada = ventasRepository.save(venta);
 
-        log.info("Venta guardada correctamente con ID: {}", guardada.getIdVenta());
+        log.info("Venta creada correctamente con ID: {}",
+                guardada.getIdVenta());
 
-        return toResponse(guardada);
+        request.getItems().forEach(item -> {
+
+            detalleVentaClient.crearDetalle(
+
+                    com.almacen.ventas.dtos.request.DetalleVentaRequest.builder()
+                            .ventaId(guardada.getIdVenta())
+                            .productoId(item.getProductoId())
+                            .cantidad(item.getCantidad())
+                            .build());
+
+            log.info("Detalle creado automáticamente para producto ID: {}",
+                    item.getProductoId());
+        });
+
+        return recalcularTotal(guardada.getIdVenta());
     }
 
     public VentasResponse actualizar(Long id, VentasRequest request) {
-
         log.info("Actualizando venta con ID: {}", id);
 
         VentasModel venta = ventasRepository.findById(id)
                 .orElseThrow(() -> {
-
                     log.error("No existe la venta con ID: {}", id);
-
-                    return new NotFoundException(
-                            "No existe la venta con ID: " + id
-                    );
+                    return new NotFoundException("No existe la venta con ID: " + id);
                 });
 
-        clienteClient.validarCliente(request.getClienteID());
-
-        log.info("Cliente validado correctamente con ID: {}", request.getClienteID());
+        if (request.getClienteId() != null) {
+            clienteClient.validarCliente(request.getClienteId());
+            log.info("Cliente validado correctamente con ID: {}", request.getClienteId());
+        } else {
+            log.info("Venta actualizada sin cliente asociado");
+        }
 
         venta.setSubTotal(request.getSubTotal());
         venta.setDescuentoTotal(request.getDescuentoTotal());
@@ -120,7 +134,7 @@ public class VentasServices {
         venta.setTipoComprobante(request.getTipoComprobante());
         venta.setMontoPagado(request.getMontoPagado());
         venta.setVuelto(request.getVuelto());
-        venta.setClienteID(request.getClienteID());
+        venta.setClienteId(request.getClienteId());
         venta.setEmpleadoId(request.getEmpleadoId());
         venta.setNumeroComprobante(request.getNumeroComprobante());
         venta.setObservaciones(request.getObservaciones());
@@ -132,22 +146,23 @@ public class VentasServices {
         return toResponse(actualizada);
     }
 
-    public VentasResponse recalcularTotal(Long idVenta) {
+    public VentasResponse obtenerPorNumeroComprobante(String numeroComprobante) {
+        return ventasRepository.findByNumeroComprobante(numeroComprobante)
+                .map(this::toResponse)
+                .orElseThrow(() -> new NotFoundException(
+                        "No existe una venta con comprobante: " + numeroComprobante));
+    }
 
+    public VentasResponse recalcularTotal(Long idVenta) {
         log.info("Recalculando total de venta con ID: {}", idVenta);
 
         VentasModel venta = ventasRepository.findById(idVenta)
                 .orElseThrow(() -> {
-
                     log.error("No existe la venta con ID: {}", idVenta);
-
-                    return new NotFoundException(
-                            "No existe la venta con ID: " + idVenta
-                    );
+                    return new NotFoundException("No existe la venta con ID: " + idVenta);
                 });
 
-        List<DetalleVentaResponse> detalles =
-                detalleVentaClient.obtenerDetallesPorVenta(idVenta);
+        List<DetalleVentaResponse> detalles = detalleVentaClient.obtenerDetallesPorVenta(idVenta);
 
         log.info("Detalles obtenidos correctamente para venta ID: {}", idVenta);
 
@@ -163,9 +178,19 @@ public class VentasServices {
 
         BigDecimal total = subTotal.subtract(descuento).add(impuesto);
 
+        total = BigDecimal.valueOf(
+                Math.round(total.doubleValue() / 10.0) * 10);
+
+        BigDecimal montoPagado = venta.getMontoPagado() != null
+                ? venta.getMontoPagado()
+                : BigDecimal.ZERO;
+
+        BigDecimal vuelto = montoPagado.subtract(total);
+
         venta.setSubTotal(subTotal);
         venta.setImpuestoTotal(impuesto);
         venta.setTotal(total);
+        venta.setVuelto(vuelto);
 
         VentasModel recalculada = ventasRepository.save(venta);
 
@@ -175,17 +200,12 @@ public class VentasServices {
     }
 
     public void eliminar(Long id) {
-
         log.info("Eliminando venta con ID: {}", id);
 
         VentasModel venta = ventasRepository.findById(id)
                 .orElseThrow(() -> {
-
                     log.error("No existe la venta con ID: {}", id);
-
-                    return new NotFoundException(
-                            "No existe la venta con ID: " + id
-                    );
+                    return new NotFoundException("No existe la venta con ID: " + id);
                 });
 
         ventasRepository.delete(venta);
@@ -193,24 +213,29 @@ public class VentasServices {
         log.info("Venta eliminada correctamente con ID: {}", id);
     }
 
-    private VentasResponse toResponse(VentasModel venta) {
+private VentasResponse toResponse(VentasModel venta) {
 
-        return VentasResponse.builder()
-                .idVenta(venta.getIdVenta())
-                .fechaVenta(venta.getFechaVenta())
-                .subTotal(venta.getSubTotal())
-                .descuentoTotal(venta.getDescuentoTotal())
-                .impuestoTotal(venta.getImpuestoTotal())
-                .total(venta.getTotal())
-                .metodoPago(venta.getMetodoPago())
-                .tipoComprobante(venta.getTipoComprobante())
-                .montoPagado(venta.getMontoPagado())
-                .vuelto(venta.getVuelto())
-                .estadoVenta(venta.getEstadoVenta())
-                .clienteID(venta.getClienteID())
-                .empleadoId(venta.getEmpleadoId())
-                .numeroComprobante(venta.getNumeroComprobante())
-                .observaciones(venta.getObservaciones())
-                .build();
+    List<DetalleVentaResponse> detalles =
+            detalleVentaClient.obtenerDetallesPorVenta(venta.getIdVenta());
+
+    return VentasResponse.builder()
+            .idVenta(venta.getIdVenta())
+            .fechaVenta(venta.getFechaVenta())
+            .subTotal(venta.getSubTotal())
+            .descuentoTotal(venta.getDescuentoTotal())
+            .impuestoTotal(venta.getImpuestoTotal())
+            .total(venta.getTotal())
+            .metodoPago(venta.getMetodoPago())
+            .tipoComprobante(venta.getTipoComprobante())
+            .montoPagado(venta.getMontoPagado())
+            .vuelto(venta.getVuelto())
+            .estadoVenta(venta.getEstadoVenta())
+            .clienteId(venta.getClienteId())
+            .empleadoId(venta.getEmpleadoId())
+            .numeroComprobante(venta.getNumeroComprobante())
+            .observaciones(venta.getObservaciones())
+            .detalles(detalles)
+            .build();
     }
+
 }

@@ -7,18 +7,8 @@ import com.almacen.ventas.enums.EstadoVentas;
 import com.almacen.ventas.enums.MetodoDePago;
 import com.almacen.ventas.enums.TipoComprobante;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
 
 @Data
 @NoArgsConstructor
@@ -30,53 +20,51 @@ public class VentasModel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long idVenta;
+    @Column(name = "id_venta")
+    private Long idVenta;
 
-    @Column(nullable = false)
+    @Column(name = "fecha_venta", nullable = false)
     private LocalDateTime fechaVenta;
 
-    @Column(nullable = false, precision = 12, scale = 2)
+    @Column(name = "sub_total", nullable = false, precision = 12, scale = 2)
     private BigDecimal subTotal;
 
-    @Column(nullable = false, precision = 12, scale = 2)
+    @Column(name = "descuento_total", nullable = false, precision = 12, scale = 2)
     private BigDecimal descuentoTotal;
 
-    @Column(nullable = false, precision = 12, scale = 2)
+    @Column(name = "impuesto_total", nullable = false, precision = 12, scale = 2)
     private BigDecimal impuestoTotal;
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal total;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
+    @Column(name = "metodo_pago", nullable = false, length = 30)
     private MetodoDePago metodoPago;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(name = "tipo_comprobante", nullable = false, length = 20)
     private TipoComprobante tipoComprobante;
 
-    @Column(nullable = false, precision = 12, scale = 2)
+    @Column(name = "monto_pagado", nullable = false, precision = 12, scale = 2)
     private BigDecimal montoPagado;
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal vuelto;
-    
+
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false,length = 20)
+    @Column(name = "estado_venta", nullable = false, length = 20)
     private EstadoVentas estadoVenta;
 
-    @Column(nullable = false)
-    private Long clienteID;
+    @Column(name = "cliente_id")
+    private Long clienteId;
 
-    @Column(nullable = false)
+    @Column(name = "empleado_id", nullable = false)
     private Long empleadoId;
 
-    @Column(nullable = false, unique = true, length = 50)
+    @Column(name = "numero_comprobante", nullable = false, unique = true, length = 50)
     private String numeroComprobante;
 
     @Column(length = 500)
     private String observaciones;
-
-
-
 }

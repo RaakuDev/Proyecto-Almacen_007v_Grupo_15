@@ -1,6 +1,5 @@
 package com.almacen.inventario_service.controller;
 
-
 import com.almacen.inventario_service.dtos.request.InventarioRequest;
 import com.almacen.inventario_service.dtos.response.InventarioResponse;
 import com.almacen.inventario_service.services.InventarioService;
@@ -36,6 +35,11 @@ public class InventarioController {
         return ResponseEntity.ok(inventarioService.obtenerPorProductoId(productoId));
     }
 
+    @GetMapping("/categoria/{categoriaId}")
+    public ResponseEntity<List<InventarioResponse>> obtenerPorCategoria(@PathVariable Long categoriaId) {
+        return ResponseEntity.ok(inventarioService.obtenerPorCategoria(categoriaId));
+    }
+
     @GetMapping("/bajo-stock")
     public ResponseEntity<List<InventarioResponse>> obtenerBajoStock() {
         return ResponseEntity.ok(inventarioService.obtenerBajoStock());
@@ -48,9 +52,25 @@ public class InventarioController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<InventarioResponse> actualizar(@PathVariable Long id,
-                                                       @Valid @RequestBody InventarioRequest request) {
+    public ResponseEntity<InventarioResponse> actualizar(
+            @PathVariable Long id,
+            @Valid @RequestBody InventarioRequest request) {
         return ResponseEntity.ok(inventarioService.actualizar(id, request));
+    }
+
+    @PutMapping("/producto/{productoId}/aumentar/{cantidad}")
+    public ResponseEntity<InventarioResponse> aumentarStock(
+            @PathVariable Long productoId,
+            @PathVariable Integer cantidad) {
+        return ResponseEntity.ok(
+                inventarioService.aumentarStock(productoId, cantidad));
+    }
+
+    @PutMapping("/producto/{productoId}/descontar/{cantidad}")
+    public ResponseEntity<InventarioResponse> descontarStock(
+            @PathVariable Long productoId,
+            @PathVariable Integer cantidad) {
+        return ResponseEntity.ok(inventarioService.descontarStock(productoId, cantidad));
     }
 
     @DeleteMapping("/{id}")

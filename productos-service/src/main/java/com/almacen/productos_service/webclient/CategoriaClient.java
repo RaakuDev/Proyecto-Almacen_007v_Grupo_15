@@ -6,14 +6,16 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
-
 @Component
 public class CategoriaClient {
 
     private final WebClient webClient;
 
-    public CategoriaClient(@Value("${categoria-service.url}") String urlBase) {
-        this.webClient = WebClient.builder()
+    public CategoriaClient(
+            WebClient.Builder webClientBuilder,
+            @Value("${categoria-service.url}") String urlBase
+    ) {
+        this.webClient = webClientBuilder
                 .baseUrl(urlBase)
                 .build();
     }
@@ -21,7 +23,7 @@ public class CategoriaClient {
     public CategoriaResponse obtenerCatPorId(Long id) {
 
         CategoriaResponse categoria = webClient.get()
-                .uri("/{id}", id)
+                .uri("/api/v1/categorias/{id}", id)
                 .retrieve()
                 .onStatus(status -> status.is4xxClientError(),
                         response -> Mono.error(new RuntimeException("Categoría no existe")))

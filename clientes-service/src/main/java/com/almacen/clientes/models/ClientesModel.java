@@ -1,16 +1,7 @@
 package com.almacen.clientes.models;
 
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
 
 @Data
 @NoArgsConstructor
@@ -20,10 +11,9 @@ import lombok.NoArgsConstructor;
 @Table(name = "clientes")
 public class ClientesModel {
 
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
     @Column(nullable = false)
     private String nombre;
@@ -34,10 +24,9 @@ public class ClientesModel {
     @Column(nullable = false)
     private String direccion;
 
-    @Column(nullable = false )
+    @Column(nullable = false)
     private String telefono;
 
-    @Column (nullable = false)
+    @Column(nullable = false)
     private String email;
-
 }

@@ -2,6 +2,7 @@ package com.almacen.clientes.controllers;
 
 import com.almacen.clientes.dtos.request.ClientesRequest;
 import com.almacen.clientes.dtos.response.ClientesResponse;
+import com.almacen.clientes.dtos.response.PedidoResponse;
 import com.almacen.clientes.services.ClientesService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,25 +18,28 @@ public class ClientesController {
 
     private final ClientesService clientesService;
 
-    // 🔹 GET /clientes
     @GetMapping
     public ResponseEntity<List<ClientesResponse>> obtenerTodos() {
         return ResponseEntity.ok(clientesService.obtenerTodos());
     }
 
-    // 🔹 GET /clientes/{id}
     @GetMapping("/{id}")
     public ResponseEntity<ClientesResponse> obtenerPorId(@PathVariable Long id) {
         return ResponseEntity.ok(clientesService.obtenerPorId(id));
     }
 
-    // 🔹 POST /clientes
+    @GetMapping("/{clienteId}/pedidos")
+    public ResponseEntity<List<PedidoResponse>> obtenerPedidosDelCliente(
+            @PathVariable Long clienteId
+    ) {
+        return ResponseEntity.ok(clientesService.obtenerPedidosDelCliente(clienteId));
+    }
+
     @PostMapping
     public ResponseEntity<ClientesResponse> crear(@Valid @RequestBody ClientesRequest request) {
         return ResponseEntity.ok(clientesService.guardar(request));
     }
 
-    // 🔹 PUT /clientes/{id}
     @PutMapping("/{id}")
     public ResponseEntity<ClientesResponse> actualizar(
             @PathVariable Long id,
@@ -44,7 +48,6 @@ public class ClientesController {
         return ResponseEntity.ok(clientesService.actualizar(id, request));
     }
 
-    // 🔹 DELETE /clientes/{id}
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         clientesService.eliminar(id);
