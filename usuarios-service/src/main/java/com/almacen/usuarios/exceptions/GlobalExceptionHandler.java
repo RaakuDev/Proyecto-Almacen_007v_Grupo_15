@@ -1,6 +1,5 @@
 package com.almacen.usuarios.exceptions;
 
-
 import com.almacen.usuarios.dtos.response.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
@@ -16,7 +15,7 @@ import java.util.Map;
 
 // Maneja de forma centralizada las excepciones del proyecto
 @RestControllerAdvice
-public class GlobalExceptionHandler{
+public class GlobalExceptionHandler {
 
     // Error de validación de @Valid en request DTO
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -84,6 +83,10 @@ public class GlobalExceptionHandler{
             Exception ex,
             HttpServletRequest request
     ) {
+
+        // Muestra el error real en Docker / consola
+        ex.printStackTrace();
+
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())

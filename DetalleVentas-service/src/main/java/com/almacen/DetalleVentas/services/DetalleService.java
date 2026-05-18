@@ -11,6 +11,7 @@ import com.almacen.DetalleVentas.dtos.response.ProductoResponse;
 import com.almacen.DetalleVentas.exceptions.NotFoundException;
 import com.almacen.DetalleVentas.models.DetalleModel;
 import com.almacen.DetalleVentas.repositories.DetalleRepository;
+import com.almacen.DetalleVentas.webclient.InventarioClient;
 import com.almacen.DetalleVentas.webclient.ProductoClient;
 import com.almacen.DetalleVentas.webclient.VentasClient;
 
@@ -20,162 +21,167 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class DetalleService {
 
-    private final DetalleRepository detalleRepository;
-    private final ProductoClient productoClient;
-    private final VentasClient ventasClient;
+        private final DetalleRepository detalleRepository;
+        private final ProductoClient productoClient;
+        private final VentasClient ventasClient;
+        private final InventarioClient inventarioClient;
 
-    public DetalleService(DetalleRepository detalleRepository,
-                          ProductoClient productoClient,
-                          VentasClient ventasClient) {
-        this.detalleRepository = detalleRepository;
-        this.productoClient = productoClient;
-        this.ventasClient = ventasClient;
-    }
+        public DetalleService(
+                        DetalleRepository detalleRepository,
+                        ProductoClient productoClient,
+                        VentasClient ventasClient,
+                        InventarioClient inventarioClient) {
+                this.detalleRepository = detalleRepository;
+                this.productoClient = productoClient;
+                this.ventasClient = ventasClient;
+                this.inventarioClient = inventarioClient;
+        }
 
-    public List<DetalleResponse> obtenerTodos() {
+        public List<DetalleResponse> obtenerTodos() {
 
-        log.info("Obteniendo todos los detalles de venta");
+                log.info("Obteniendo todos los detalles de venta");
 
-        return detalleRepository.findAll()
-                .stream()
-                .map(this::toResponse)
-                .toList();
-    }
+                return detalleRepository.findAll()
+                                .stream()
+                                .map(this::toResponse)
+                                .toList();
+        }
 
-    public DetalleResponse obtenerPorId(Long id) {
+        public DetalleResponse obtenerPorId(Long id) {
 
-        log.info("Buscando detalle de venta con ID: {}", id);
+                log.info("Buscando detalle de venta con ID: {}", id);
 
-        return detalleRepository.findById(id)
-                .map(this::toResponse)
-                .orElseThrow(() -> {
+                return detalleRepository.findById(id)
+                                .map(this::toResponse)
+                                .orElseThrow(() -> {
 
-                    log.error("Detalle de venta no encontrado con ID: {}", id);
+                                        log.error("Detalle de venta no encontrado con ID: {}", id);
 
-                    return new NotFoundException(
-                            "Detalle de venta no encontrado con ID: " + id
-                    );
-                });
-    }
+                                        return new NotFoundException(
+                                                        "Detalle de venta no encontrado con ID: " + id);
+                                });
+        }
 
-    public List<DetalleResponse> obtenerPorVentaId(Long ventaId) {
+        public List<DetalleResponse> obtenerPorVentaId(Long ventaId) {
 
-        log.info("Obteniendo detalles asociados a la venta ID: {}", ventaId);
+                log.info("Obteniendo detalles asociados a la venta ID: {}", ventaId);
 
-        return detalleRepository.findByVentaId(ventaId)
-                .stream()
-                .map(this::toResponse)
-                .toList();
-    }
+                return detalleRepository.findByVentaId(ventaId)
+                                .stream()
+                                .map(this::toResponse)
+                                .toList();
+        }
 
-    public DetalleResponse guardar(DetalleRequest request) {
+        public DetalleResponse guardar(DetalleRequest request) {
 
-        log.info(
-                "Guardando detalle de venta para venta ID: {} y producto ID: {}",
-                request.getVentaId(),
-                request.getProductoId()
-        );
+                log.info(
+                                "Guardando detalle de venta para venta ID: {} y producto ID: {}",
+                                request.getVentaId(),
+                                request.getProductoId());
 
-        ventasClient.validarVenta(request.getVentaId());
+               // ventasClient.validarVenta(request.getVentaId());
 
-        log.info("Venta validada correctamente con ID: {}", request.getVentaId());
+                //log.info("Venta validada correctamente con ID: {}", request.getVentaId());
 
-        ProductoResponse producto =
-                productoClient.obtenerProducto(request.getProductoId());
+                ProductoResponse producto = productoClient.obtenerProducto(request.getProductoId());
 
-        log.info("Producto obtenido correctamente con ID: {}", request.getProductoId());
+                log.info("Producto obtenido correctamente con ID: {}", request.getProductoId());
 
-        BigDecimal subTotal = BigDecimal.valueOf(producto.getPrecio())
-                .multiply(BigDecimal.valueOf(request.getCantidad()));
+                inventarioClient.descontarStock(
+                                request.getProductoId(),
+                                request.getCantidad());
 
-        DetalleModel detalle = DetalleModel.builder()
-                .ventaId(request.getVentaId())
-                .productoId(request.getProductoId())
-                .cantidad(request.getCantidad())
-                .precioUnitario(BigDecimal.valueOf(producto.getPrecio()))
-                .subTotal(subTotal)
-                .build();
+                log.info("Stock descontado correctamente para producto ID: {}", request.getProductoId());
 
-        DetalleModel guardado = detalleRepository.save(detalle);
+                BigDecimal subTotal = BigDecimal.valueOf(producto.getPrecio())
+                                .multiply(BigDecimal.valueOf(request.getCantidad()));
 
-        log.info(
-                "Detalle de venta guardado correctamente con ID: {}",
-                guardado.getIdDetalleVenta()
-        );
+                DetalleModel detalle = DetalleModel.builder()
+                                .ventaId(request.getVentaId())
+                                .productoId(request.getProductoId())
+                                .cantidad(request.getCantidad())
+                                .precioUnitario(BigDecimal.valueOf(producto.getPrecio()))
+                                .subTotal(subTotal)
+                                .build();
 
-        return toResponse(guardado);
-    }
+                DetalleModel guardado = detalleRepository.save(detalle);
 
-    public DetalleResponse actualizar(Long id, DetalleRequest request) {
+                log.info(
+                                "Detalle de venta guardado correctamente con ID: {}",
+                                guardado.getIdDetalleVenta());
 
-        log.info("Actualizando detalle de venta con ID: {}", id);
+                return toResponse(guardado);
+        }
 
-        DetalleModel detalle = detalleRepository.findById(id)
-                .orElseThrow(() -> {
+        public DetalleResponse actualizar(Long id, DetalleRequest request) {
 
-                    log.error("Detalle de venta no encontrado con ID: {}", id);
+                log.info("Actualizando detalle de venta con ID: {}", id);
 
-                    return new NotFoundException(
-                            "Detalle de venta no encontrado con ID: " + id
-                    );
-                });
+                DetalleModel detalle = detalleRepository.findById(id)
+                                .orElseThrow(() -> {
 
-        ventasClient.validarVenta(request.getVentaId());
+                                        log.error("Detalle de venta no encontrado con ID: {}", id);
 
-        log.info("Venta validada correctamente con ID: {}", request.getVentaId());
+                                        return new NotFoundException(
+                                                        "Detalle de venta no encontrado con ID: " + id);
+                                });
 
-        ProductoResponse producto =
-                productoClient.obtenerProducto(request.getProductoId());
+                ventasClient.validarVenta(request.getVentaId());
 
-        log.info("Producto obtenido correctamente con ID: {}", request.getProductoId());
+                log.info("Venta validada correctamente con ID: {}", request.getVentaId());
 
-        BigDecimal subTotal = BigDecimal.valueOf(producto.getPrecio())
-                .multiply(BigDecimal.valueOf(request.getCantidad()));
+                ProductoResponse producto = productoClient.obtenerProducto(request.getProductoId());
 
-        detalle.setVentaId(request.getVentaId());
-        detalle.setProductoId(request.getProductoId());
-        detalle.setCantidad(request.getCantidad());
-        detalle.setPrecioUnitario(BigDecimal.valueOf(producto.getPrecio()));
-        detalle.setSubTotal(subTotal);
+                log.info("Producto obtenido correctamente con ID: {}", request.getProductoId());
 
-        DetalleModel actualizado = detalleRepository.save(detalle);
+                BigDecimal subTotal = BigDecimal.valueOf(producto.getPrecio())
+                                .multiply(BigDecimal.valueOf(request.getCantidad()));
 
-        log.info(
-                "Detalle de venta actualizado correctamente con ID: {}",
-                actualizado.getIdDetalleVenta()
-        );
+                detalle.setVentaId(request.getVentaId());
+                detalle.setProductoId(request.getProductoId());
+                detalle.setCantidad(request.getCantidad());
+                detalle.setPrecioUnitario(BigDecimal.valueOf(producto.getPrecio()));
+                detalle.setSubTotal(subTotal);
 
-        return toResponse(actualizado);
-    }
+                DetalleModel actualizado = detalleRepository.save(detalle);
 
-    public void eliminar(Long id) {
+                log.info(
+                                "Detalle de venta actualizado correctamente con ID: {}",
+                                actualizado.getIdDetalleVenta());
 
-        log.info("Eliminando detalle de venta con ID: {}", id);
+                return toResponse(actualizado);
+        }
 
-        DetalleModel detalle = detalleRepository.findById(id)
-                .orElseThrow(() -> {
+        public void eliminar(Long id) {
 
-                    log.error("Detalle de venta no encontrado con ID: {}", id);
+                log.info("Eliminando detalle de venta con ID: {}", id);
 
-                    return new NotFoundException(
-                            "Detalle de venta no encontrado con ID: " + id
-                    );
-                });
+                DetalleModel detalle = detalleRepository.findById(id)
+                                .orElseThrow(() -> {
 
-        detalleRepository.delete(detalle);
+                                        log.error("Detalle de venta no encontrado con ID: {}", id);
 
-        log.info("Detalle de venta eliminado correctamente con ID: {}", id);
-    }
+                                        return new NotFoundException(
+                                                        "Detalle de venta no encontrado con ID: " + id);
+                                });
 
-    private DetalleResponse toResponse(DetalleModel detalle) {
+                detalleRepository.delete(detalle);
 
-        return DetalleResponse.builder()
-                .idDetalle(detalle.getIdDetalleVenta())
-                .ventaId(detalle.getVentaId())
-                .productoId(detalle.getProductoId())
-                .cantidad(detalle.getCantidad())
-                .precioUnitario(detalle.getPrecioUnitario())
-                .subTotal(detalle.getSubTotal())
-                .build();
-    }
+                log.info("Detalle de venta eliminado correctamente con ID: {}", id);
+        }
+
+        private DetalleResponse toResponse(DetalleModel detalle) {
+
+                ProductoResponse producto = productoClient.obtenerProducto(detalle.getProductoId());
+
+                return DetalleResponse.builder()
+                                .idDetalle(detalle.getIdDetalleVenta())
+                                .ventaId(detalle.getVentaId())
+                                .productoId(detalle.getProductoId())
+                                .nombreProducto(producto.getNombre())
+                                .cantidad(detalle.getCantidad())
+                                .precioUnitario(detalle.getPrecioUnitario())
+                                .subTotal(detalle.getSubTotal())
+                                .build();
+        }
 }

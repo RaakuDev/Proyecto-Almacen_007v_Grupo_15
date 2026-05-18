@@ -1,0 +1,6 @@
+CREATE TABLE empleados (
+    id BIGSERIAL PRIMARY KEY,
+    nombre VARCHAR(255) NOT NULL,
+    cargo VARCHAR(255) NOT NULL,
+    turno VARCHAR(255) NOT NULL
+);

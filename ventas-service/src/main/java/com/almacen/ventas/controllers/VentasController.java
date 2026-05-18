@@ -45,6 +45,13 @@ public class VentasController {
         return ResponseEntity.ok(ventasServices.actualizar(id, request));
     }
 
+    @GetMapping("/comprobante/{numeroComprobante}")
+    public ResponseEntity<VentasResponse> obtenerPorNumeroComprobante(
+            @PathVariable String numeroComprobante) {
+        return ResponseEntity.ok(
+                ventasServices.obtenerPorNumeroComprobante(numeroComprobante));
+    }
+
     @PutMapping("/{id}/recalcular-total")
     public ResponseEntity<VentasResponse> recalcularTotal(@PathVariable Long id) {
         return ResponseEntity.ok(ventasServices.recalcularTotal(id));

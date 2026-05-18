@@ -2,6 +2,8 @@ package com.almacen.usuarios.controllers;
 
 import com.almacen.usuarios.dtos.request.LoginRequest;
 import com.almacen.usuarios.dtos.response.LoginResponse;
+import com.almacen.usuarios.models.UsuarioModel;
+import com.almacen.usuarios.repositories.UsuarioRepository;
 import com.almacen.usuarios.security.JwtService;
 
 import jakarta.validation.Valid;
@@ -17,28 +19,29 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final JwtService jwtService;
+    private final UsuarioRepository usuarioRepository;
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(
-            @Valid @RequestBody LoginRequest request
-    ) {
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
 
-        // Usuario quemado para pruebas iniciales
-        if (
-                !request.getUsername().equals("admin")
-                || !request.getPassword().equals("1234")
-        ) {
-            return ResponseEntity
-                    .status(HttpStatus.UNAUTHORIZED)
-                    .build();
+        UsuarioModel usuario = usuarioRepository.findByUsername(request.getUsername())
+                .orElse(null);
+
+        if (usuario == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        // Rol quemado para que el token tenga permisos
-        String rol = "ADMIN";
+        if (!usuario.getPassword().equals(request.getPassword())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        if (!usuario.isEstado()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
 
         String token = jwtService.generarToken(
-                request.getUsername(),
-                rol
+                usuario.getUsername(),
+                usuario.getRol().name()
         );
 
         return ResponseEntity.ok(

@@ -1,0 +1,56 @@
+CREAR CARPETA
+-	mkdir backups_db
+
+-----------------------------------------------------------------------------------------------------
+EXPORTAR TODAS LAS BASES
+
+docker-compose up -d
+docker exec -t postgres-usuarios pg_dump -U admin usuarios_db > backups_db\usuarios.sql
+docker exec -t postgres-categorias pg_dump -U admin categorias_db > backups_db\categorias.sql
+docker exec -t postgres-proveedores pg_dump -U admin proveedores_db > backups_db\proveedores.sql
+docker exec -t postgres-productos pg_dump -U admin productos_db > backups_db\productos.sql
+docker exec -t postgres-inventario pg_dump -U admin inventario_db > backups_db\inventario.sql
+docker exec -t postgres-clientes pg_dump -U admin clientes_db > backups_db\clientes.sql
+docker exec -t postgres-empleados pg_dump -U admin empleados_db > backups_db\empleados.sql
+docker exec -t postgres-ventas pg_dump -U admin ventas_db > backups_db\ventas.sql
+docker exec -t postgres-detalle-venta pg_dump -U admin detalle_venta_db > backups_db\detalle_venta.sql
+docker exec -t postgres-pedidos pg_dump -U admin pedidos_db > backups_db\pedidos.sql
+
+-----------------------------------------------------------------------------------------------------
+
+
+COMPRIMIR PROYECTO
+
+-----------------------------------------------------------------------------------------------------
+
+
+
+-----------------------------------------------------------------------------------------------------
+PARA CARGAR BASE DE DATOS
+
+-----------------------------------------------------------------------------------------------------
+docker-compose up -d        PARA LEVANTAR TODO
+
+
+
+RESTAURAR BASES DE DATOS
+
+docker exec -i postgres-usuarios psql -U admin usuarios_db < backups_db/usuarios.sql
+
+docker exec -i postgres-categorias psql -U admin categorias_db < backups_db/categorias.sql
+
+docker exec -i postgres-proveedores psql -U admin proveedores_db < backups_db/proveedores.sql
+
+docker exec -i postgres-productos psql -U admin productos_db < backups_db/productos.sql
+
+docker exec -i postgres-inventario psql -U admin inventario_db < backups_db/inventario.sql
+
+docker exec -i postgres-clientes psql -U admin clientes_db < backups_db/clientes.sql
+
+docker exec -i postgres-empleados psql -U admin empleados_db < backups_db/empleados.sql
+
+docker exec -i postgres-ventas psql -U admin ventas_db < backups_db/ventas.sql
+
+docker exec -i postgres-detalle-venta psql -U admin detalle_venta_db < backups_db/detalle_venta.sql
+
+docker exec -i postgres-pedidos psql -U admin pedidos_db < backups_db/pedidos.sql

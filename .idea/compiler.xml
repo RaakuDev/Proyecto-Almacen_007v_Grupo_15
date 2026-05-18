@@ -2,27 +2,24 @@
 <project version="4">
   <component name="CompilerConfiguration">
     <annotationProcessing>
-      <profile name="Annotation profile for productos-service" enabled="true">
+      <profile name="Annotation profile for ventas-service" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="false">
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.40/lombok-1.18.40.jar" />
         </processorPath>
-        <module name="categorias-service" />
-        <module name="inventario-service" />
-        <module name="productos-service" />
-      </profile>
-      <profile name="Annotation profile for clientes-service" enabled="true">
-        <sourceOutputDir name="target/generated-sources/annotations" />
-        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
-        <outputRelativeToContentRoot value="true" />
-        <processorPath useClasspath="false">
-          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.46/lombok-1.18.46.jar" />
-        </processorPath>
-        <module name="clientes-service" />
         <module name="ventas-service" />
+        <module name="empleados-service" />
+        <module name="service" />
+        <module name="proveedores-service" />
+        <module name="usuarios-service" />
+        <module name="pedidos-service" />
+        <module name="clientes-service" />
+        <module name="categorias-service" />
+        <module name="productos-service" />
         <module name="DetalleVentas-service" />
+        <module name="inventario-service" />
       </profile>
     </annotationProcessing>
   </component>
@@ -31,8 +28,13 @@
       <module name="DetalleVentas-service" options="-parameters" />
       <module name="categorias-service" options="-parameters" />
       <module name="clientes-service" options="-parameters" />
+      <module name="empleados-service" options="-parameters" />
       <module name="inventario-service" options="-parameters" />
+      <module name="pedidos-service" options="-parameters" />
       <module name="productos-service" options="-parameters" />
+      <module name="proveedores-service" options="-parameters" />
+      <module name="service" options="-parameters" />
+      <module name="usuarios-service" options="-parameters" />
       <module name="ventas-service" options="-parameters" />
     </option>
   </component>

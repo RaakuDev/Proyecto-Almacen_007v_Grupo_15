@@ -1,5 +1,6 @@
 package com.almacen.productos_service.services;
 
+import com.almacen.productos_service.dtos.request.InventarioRequest;
 import com.almacen.productos_service.dtos.request.ProductoRequest;
 import com.almacen.productos_service.dtos.response.CategoriaResponse;
 import com.almacen.productos_service.dtos.response.ProductoResponse;
@@ -7,11 +8,11 @@ import com.almacen.productos_service.exceptions.NotFoundException;
 import com.almacen.productos_service.models.ProductoModel;
 import com.almacen.productos_service.repositories.ProductoRepository;
 import com.almacen.productos_service.webclient.CategoriaClient;
+import com.almacen.productos_service.webclient.InventarioClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Service
@@ -19,14 +20,21 @@ public class ProductoService {
 
     private final ProductoRepository productoRepository;
     private final CategoriaClient categoriaClient;
+    private final InventarioClient inventarioClient;
 
-    public ProductoService(ProductoRepository productoRepository, CategoriaClient categoriaClient) {
+    public ProductoService(
+            ProductoRepository productoRepository,
+            CategoriaClient categoriaClient,
+            InventarioClient inventarioClient
+    ) {
         this.productoRepository = productoRepository;
         this.categoriaClient = categoriaClient;
+        this.inventarioClient = inventarioClient;
     }
 
     public List<ProductoResponse> obtenerTodos() {
         log.info("Obteniendo todos los productos");
+
         return productoRepository.findAll()
                 .stream()
                 .map(this::mapToResponseConCategoria)
@@ -35,54 +43,100 @@ public class ProductoService {
 
     public ProductoResponse obtenerPorId(Long id) {
         log.info("Buscando producto con id: {}", id);
+
         ProductoModel producto = productoRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("No existe el producto con id: " + id));
+
         return mapToResponseConCategoria(producto);
+    }
+
+    public List<ProductoResponse> obtenerPorCategoria(Long categoriaId) {
+        log.info("Buscando productos por categoría con id: {}", categoriaId);
+
+        obtenerCategoriaDesdeServicio(categoriaId);
+
+        return productoRepository.findByCategoriaId(categoriaId)
+                .stream()
+                .map(this::mapToResponseConCategoria)
+                .toList();
+    }
+
+    public List<ProductoResponse> obtenerPorProveedor(Long proveedorId) {
+        log.info("Buscando productos por proveedor con id: {}", proveedorId);
+
+        return productoRepository.findByProveedorId(proveedorId)
+                .stream()
+                .map(this::mapToResponseConCategoria)
+                .toList();
     }
 
     public ProductoResponse guardar(ProductoRequest request) {
         log.info("Guardando nuevo producto: {}", request.getNombre());
+
         CategoriaResponse categoria = obtenerCategoriaDesdeServicio(request.getCategoriaId());
 
         ProductoModel producto = new ProductoModel();
         producto.setNombre(request.getNombre());
         producto.setPrecio(request.getPrecio());
-        producto.setStock(request.getStock());
         producto.setCategoriaId(request.getCategoriaId());
+        producto.setProveedorId(request.getProveedorId());
 
         ProductoModel guardado = productoRepository.save(producto);
-        log.info("Categoría guardada con id: {}", guardado.getId());
+
+        log.info("Producto guardado con id: {}", guardado.getId());
+
+        InventarioRequest inventarioRequest = InventarioRequest.builder()
+                .productoId(guardado.getId())
+                .stockActual(request.getStockInicial())
+                .stockMinimo(request.getStockMinimo())
+                .build();
+
+        try {
+            inventarioClient.crearInventario(inventarioRequest);
+            log.info("Inventario creado automáticamente para producto id: {}", guardado.getId());
+        } catch (Exception e) {
+            log.error("ERROR AL CREAR INVENTARIO para producto id {}: {}", guardado.getId(), e.getMessage());
+            throw e;
+        }
+
         return mapToResponse(guardado, categoria);
     }
 
     public ProductoResponse actualizar(Long id, ProductoRequest request) {
         log.info("Actualizando producto con id: {}", id);
+
         ProductoModel producto = productoRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("No existe el producto con id: {}", id);
                     return new NotFoundException("No existe el producto con id: " + id);
                 });
+
         CategoriaResponse categoria = obtenerCategoriaDesdeServicio(request.getCategoriaId());
 
         producto.setNombre(request.getNombre());
         producto.setPrecio(request.getPrecio());
-        producto.setStock(request.getStock());
         producto.setCategoriaId(request.getCategoriaId());
+        producto.setProveedorId(request.getProveedorId());
 
         ProductoModel actualizado = productoRepository.save(producto);
+
         log.info("Producto actualizado con id: {}", actualizado.getId());
+
         return mapToResponse(actualizado, categoria);
     }
 
     public void eliminar(Long id) {
         log.info("Eliminando producto con id: {}", id);
+
         ProductoModel producto = productoRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("No existe el producto con id: {}", id);
                     return new NotFoundException("No existe el producto con id: " + id);
                 });
+
         productoRepository.delete(producto);
-        log.info("producto eliminado con id: {}", id);
+
+        log.info("Producto eliminado con id: {}", id);
     }
 
     private CategoriaResponse obtenerCategoriaDesdeServicio(Long categoriaId) {
@@ -104,8 +158,8 @@ public class ProductoService {
                 .id(producto.getId())
                 .nombre(producto.getNombre())
                 .precio(producto.getPrecio())
-                .stock(producto.getStock())
                 .categoriaId(producto.getCategoriaId())
+                .proveedorId(producto.getProveedorId())
                 .categoria(categoria)
                 .build();
     }
