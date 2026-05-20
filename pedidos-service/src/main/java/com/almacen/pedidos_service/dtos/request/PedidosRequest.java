@@ -3,6 +3,8 @@ package com.almacen.pedidos_service.dtos.request;
 import java.time.LocalDate;
 import java.util.List;
 
+import com.almacen.pedidos_service.dtos.response.PedidosResponse;
+import com.almacen.pedidos_service.dtos.response.ProductoResponse;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -22,6 +24,6 @@ public class PedidosRequest {
     @NotNull(message = "El id del cliente es obligatorio")
     private Long clienteId;
 
-    @NotNull(message = "Los items son obligatorios")
+    @NotNull(message = "Los productos son obligatorios")
     private List<PedidoItem> items;
 }

@@ -1,6 +1,7 @@
 package com.almacen.pedidos_service.model;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -30,5 +31,5 @@ public class PedidoModel {
     private Long clienteId;
 
     @Column(nullable = false)
-    private String items;
+    private String productosIds;
 }
