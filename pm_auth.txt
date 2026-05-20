@@ -1,0 +1,15 @@
+{
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const response = pm.response.json();",
+          "",
+          "pm.collectionVariables.set(\"token\", response.token);"
+        ]
+      }
+    }
+  ]
+}
