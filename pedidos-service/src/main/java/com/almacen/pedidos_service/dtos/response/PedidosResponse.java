@@ -18,7 +18,6 @@ public class PedidosResponse {
     private Long proveedorId;
     private Long clienteId;
 
-    private List<PedidoItem> items;
-
     private ProveedorResponse proveedor;
+    private List<ProductoResponse> productos;
 }

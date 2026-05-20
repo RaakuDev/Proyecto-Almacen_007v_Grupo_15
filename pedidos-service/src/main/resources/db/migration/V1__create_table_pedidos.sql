@@ -4,5 +4,5 @@ CREATE TABLE IF NOT EXISTS pedidos (
     estado         VARCHAR(50) NOT NULL,
     proveedor_id   BIGINT NOT NULL,
     cliente_id     BIGINT NOT NULL,
-    items          TEXT NOT NULL
+    productos_ids  TEXT NOT NULL
 );

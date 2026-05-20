@@ -9,6 +9,6 @@ public class ProductoResponse {
     private Long id;
     private String nombre;
     private Long precio;
-    private Integer stock;
     private Long categoriaId;
+    private Integer cantidad;
 }
