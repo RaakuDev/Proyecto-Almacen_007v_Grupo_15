@@ -16,8 +16,9 @@ public class PedidosResponse {
     private String estado;
 
     private Long proveedorId;
-    private Long clienteId;
-
     private ProveedorResponse proveedor;
+    private Long clienteId;
+    private ClienteResponse cliente;
+
     private List<ProductoResponse> productos;
 }

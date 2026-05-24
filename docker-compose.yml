@@ -167,6 +167,7 @@ services:
       - postgres-productos
       - categorias-service
       - inventario-service
+      - proveedores-service
     ports:
       - "8085:8085"
     environment:
@@ -175,6 +176,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: admin123
       CATEGORIA_SERVICE_URL: http://categorias-service:8084
       INVENTARIO_SERVICE_URL: http://inventario-service:8090
+      PROVEEDOR_SERVICE_URL: http://proveedores-service:8086
 
   inventario-service:
     build:
@@ -244,14 +246,16 @@ services:
     depends_on:
       - postgres-ventas
       - clientes-service
+      - empleados-service
     ports:
       - "8088:8088"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-ventas:5432/ventas_db
       SPRING_DATASOURCE_USERNAME: admin
       SPRING_DATASOURCE_PASSWORD: admin123
-      CLIENTES_SERVICE_URL: http://clientes-service:8087
+      CLIENTE_SERVICE_URL: http://clientes-service:8087
       DETALLEVENTAS_SERVICE_URL: http://detalle-venta-service:8089
+      EMPLEADO_SERVICE_URL: http://empleados-service:8091
 
   detalle-venta-service:
     build:
@@ -282,6 +286,7 @@ services:
       - postgres-pedidos
       - proveedores-service
       - productos-service
+      - clientes-service
     ports:
       - "8092:8092"
     environment:
@@ -290,6 +295,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: admin123
       PROVEEDOR_SERVICE_URL: http://proveedores-service:8086
       PRODUCTO_SERVICE_URL: http://productos-service:8085
+      CLIENTE_SERVICE_URL: http://clientes-service:8087
 
 volumes:
   postgres_categorias_data:

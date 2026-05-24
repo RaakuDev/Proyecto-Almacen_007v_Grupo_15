@@ -3,13 +3,17 @@ package com.almacen.pedidos_service.service;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Collections;
 
+import com.almacen.pedidos_service.dtos.response.ClienteResponse;
 import com.almacen.pedidos_service.dtos.response.ProductoResponse;
 import com.almacen.pedidos_service.dtos.response.ProveedorResponse;
+import com.almacen.pedidos_service.webclient.ClienteClient;
 import com.almacen.pedidos_service.webclient.ProductoClient;
 import com.almacen.pedidos_service.webclient.ProveedorClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.almacen.pedidos_service.dtos.response.PedidosResponse;
 import com.almacen.pedidos_service.dtos.request.PedidosRequest;
@@ -27,7 +31,9 @@ public class PedidoService {
     private final PedidoRepository pedidoRepository;
     private final ProveedorClient proveedorClient;
     private final ProductoClient productoClient;
+    private final ClienteClient clienteClient;
 
+    @Transactional(readOnly = true)
     public List<PedidosResponse> obtenerTodos() {
         return pedidoRepository.findAll()
                 .stream()
@@ -35,12 +41,14 @@ public class PedidoService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public PedidosResponse obtenerPorId(Long id) {
         return pedidoRepository.findById(id)
                 .map(this::toResponse)
                 .orElseThrow(() -> new NotFoundException("No existe el pedido con id: " + id));
     }
 
+    @Transactional(readOnly = true)
     public List<PedidosResponse> obtenerPorCliente(Long clienteId) {
         log.info("Buscando pedidos del cliente con id: {}", clienteId);
         return pedidoRepository.findByClienteId(clienteId)
@@ -49,6 +57,7 @@ public class PedidoService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<PedidosResponse> obtenerPorEstado(String estado) {
         log.info("Buscando pedidos con estado: {}", estado);
         return pedidoRepository.findByEstado(estado)
@@ -58,12 +67,11 @@ public class PedidoService {
     }
 
     public PedidosResponse guardar(PedidosRequest request) {
+        // 1. Validaciones externas ANTES de abrir transacción de escritura
         ProveedorResponse proveedor = obtenerProveedorDesdeServicio(request.getProveedorId());
 
-        // Verificar que cada producto existe
-        request.getItems().forEach(item ->
-                productoClient.obtenerProductoPorId(item.getProductoId())
-        );
+        // Verificación rápida de productos
+        request.getItems().forEach(item -> productoClient.obtenerProductoPorId(item.getProductoId()));
 
         PedidoModel pedido = new PedidoModel();
         pedido.setFechaPedido(request.getFechaPedido());
@@ -85,9 +93,7 @@ public class PedidoService {
 
         ProveedorResponse proveedor = obtenerProveedorDesdeServicio(request.getProveedorId());
 
-        request.getItems().forEach(item ->
-                productoClient.obtenerProductoPorId(item.getProductoId())
-        );
+        request.getItems().forEach(item -> productoClient.obtenerProductoPorId(item.getProductoId()));
 
         pedido.setFechaPedido(request.getFechaPedido());
         pedido.setEstado(request.getEstado());
@@ -98,17 +104,14 @@ public class PedidoService {
                 .collect(Collectors.joining(",")));
 
         PedidoModel actualizado = pedidoRepository.save(pedido);
-        log.info("Pedido actualizado con id: {}", actualizado.getId());
         return toResponse(actualizado, proveedor);
     }
 
     public PedidosResponse cambiarEstado(Long id, String estado) {
-        log.info("Cambiando estado del pedido ID: {} a {}", id, estado);
         PedidoModel pedido = pedidoRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("No existe el pedido con ID: " + id));
         pedido.setEstado(estado);
         PedidoModel actualizado = pedidoRepository.save(pedido);
-        log.info("Estado del pedido {} cambiado a {}", id, estado);
         return toResponse(actualizado);
     }
 
@@ -117,20 +120,39 @@ public class PedidoService {
             throw new NotFoundException("No existe el pedido con id: " + id);
         }
         pedidoRepository.deleteById(id);
-        log.info("Pedido eliminado con id: {}", id);
     }
 
     private PedidosResponse toResponse(PedidoModel model, ProveedorResponse proveedor) {
-        List<ProductoResponse> productos = Arrays.stream(model.getProductosIds().split(","))
+        // Manejo de nulos en productosIds para evitar NullPointerException
+        List<ProductoResponse> productos = (model.getProductosIds() == null || model.getProductosIds().isEmpty())
+                ? Collections.emptyList()
+                : Arrays.stream(model.getProductosIds().split(","))
                 .map(entry -> {
-                    String[] partes = entry.trim().split(":");
-                    Long productoId = Long.parseLong(partes[0]);
-                    Integer cantidad = Integer.parseInt(partes[1]);
-                    ProductoResponse producto = productoClient.obtenerProductoPorId(productoId);
-                    producto.setCantidad(cantidad);
-                    return producto;
+                    try {
+                        String[] partes = entry.trim().split(":");
+                        Long productoId = Long.parseLong(partes[0]);
+                        Integer cantidad = Integer.parseInt(partes[1]);
+                        ProductoResponse producto = productoClient.obtenerProductoPorId(productoId);
+                        if (producto != null) {
+                            producto.setCantidad(cantidad);
+                        }
+                        return producto;
+                    } catch (Exception e) {
+                        log.error("Error procesando producto en entry: {}", entry);
+                        return null;
+                    }
                 })
+                .filter(p -> p != null)
                 .toList();
+
+        ClienteResponse cliente = null;
+        if (model.getClienteId() != null) {
+            try {
+                cliente = clienteClient.obtenerClientePorId(model.getClienteId());
+            } catch (Exception e) {
+                log.error("Error al obtener cliente con id: {}", model.getClienteId(), e);
+            }
+        }
 
         return PedidosResponse.builder()
                 .id(model.getId())
@@ -138,13 +160,21 @@ public class PedidoService {
                 .estado(model.getEstado())
                 .proveedorId(model.getProveedorId())
                 .clienteId(model.getClienteId())
+                .cliente(cliente)
                 .proveedor(proveedor)
                 .productos(productos)
                 .build();
     }
 
     private PedidosResponse toResponse(PedidoModel model) {
-        ProveedorResponse proveedor = obtenerProveedorDesdeServicio(model.getProveedorId());
+        ProveedorResponse proveedor = null;
+        if (model.getProveedorId() != null) {
+            try {
+                proveedor = proveedorClient.obtenerProveedorPorId(model.getProveedorId());
+            } catch (Exception e) {
+                log.error("Error al obtener proveedor para el response");
+            }
+        }
         return toResponse(model, proveedor);
     }
 
@@ -152,17 +182,7 @@ public class PedidoService {
         try {
             return proveedorClient.obtenerProveedorPorId(proveedorId);
         } catch (Exception e) {
-            log.error("No existe el proveedor con id: {}", proveedorId);
-            throw new NotFoundException("No existe el proveedor con id: " + proveedorId);
-        }
-    }
-
-    private ProductoResponse obtenerProductoDesdeServicio(Long productoId) {
-        try {
-            return productoClient.obtenerProductoPorId(productoId);
-        } catch (Exception e) {
-            log.error("No existe el producto con id: {}", productoId);
-            throw new NotFoundException("No existe el producto con id: " + productoId);
+            throw new NotFoundException("No existe o no se pudo validar el proveedor con id: " + proveedorId);
         }
     }
 }

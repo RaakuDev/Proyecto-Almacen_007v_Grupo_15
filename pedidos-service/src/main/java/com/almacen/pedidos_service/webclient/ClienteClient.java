@@ -1,6 +1,6 @@
-package com.almacen.ventas.webclient;
+package com.almacen.pedidos_service.webclient;
 
-import com.almacen.ventas.dtos.response.ClienteResponse;
+import com.almacen.pedidos_service.dtos.response.ClienteResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
