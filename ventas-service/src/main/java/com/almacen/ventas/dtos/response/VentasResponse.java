@@ -27,7 +27,9 @@ public class VentasResponse {
     private BigDecimal vuelto;
     private EstadoVentas estadoVenta;
     private Long clienteId;
+    private ClienteResponse cliente;
     private Long empleadoId;
+    private EmpleadoResponse empleado;
     private String numeroComprobante;
     private String observaciones;
     private List<DetalleVentaResponse> detalles;

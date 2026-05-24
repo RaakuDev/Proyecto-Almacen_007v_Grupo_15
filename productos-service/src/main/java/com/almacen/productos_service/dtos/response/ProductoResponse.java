@@ -15,4 +15,5 @@ public class ProductoResponse {
     private Long proveedorId;
 
     private CategoriaResponse categoria;
+    private ProveedorResponse proveedor;
 }

@@ -4,6 +4,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.almacen.ventas.dtos.response.ClienteResponse;
+import com.almacen.ventas.dtos.response.EmpleadoResponse;
+import com.almacen.ventas.webclient.EmpleadoClient;
 import org.springframework.stereotype.Service;
 
 import com.almacen.ventas.dtos.request.VentasRequest;
@@ -25,14 +28,16 @@ public class VentasServices {
     private final VentasRepository ventasRepository;
     private final ClienteClient clienteClient;
     private final DetalleVentaClient detalleVentaClient;
+    private final EmpleadoClient empleadoClient;
 
     public VentasServices(
             VentasRepository ventasRepository,
             ClienteClient clienteClient,
-            DetalleVentaClient detalleVentaClient) {
+            DetalleVentaClient detalleVentaClient, EmpleadoClient empleadoClient) {
         this.ventasRepository = ventasRepository;
         this.clienteClient = clienteClient;
         this.detalleVentaClient = detalleVentaClient;
+        this.empleadoClient = empleadoClient;
     }
 
     public List<VentasResponse> obtenerTodas() {
@@ -60,8 +65,6 @@ public class VentasServices {
         log.info("Guardando nueva venta");
 
         if (request.getClienteId() != null) {
-
-            clienteClient.validarCliente(request.getClienteId());
 
             log.info("Cliente validado correctamente con ID: {}",
                     request.getClienteId());
@@ -120,7 +123,6 @@ public class VentasServices {
                 });
 
         if (request.getClienteId() != null) {
-            clienteClient.validarCliente(request.getClienteId());
             log.info("Cliente validado correctamente con ID: {}", request.getClienteId());
         } else {
             log.info("Venta actualizada sin cliente asociado");
@@ -213,29 +215,50 @@ public class VentasServices {
         log.info("Venta eliminada correctamente con ID: {}", id);
     }
 
-private VentasResponse toResponse(VentasModel venta) {
+    private VentasResponse toResponse(VentasModel venta) {
+        List<DetalleVentaResponse> detalles =
+                detalleVentaClient.obtenerDetallesPorVenta(venta.getIdVenta());
 
-    List<DetalleVentaResponse> detalles =
-            detalleVentaClient.obtenerDetallesPorVenta(venta.getIdVenta());
+        // Obtener cliente si existe
+        ClienteResponse cliente = null;
+        if (venta.getClienteId() != null) {
+            try {
+                cliente = clienteClient.obtenerClientePorId(venta.getClienteId());
+            } catch (Exception e) {
+                log.error("Error al obtener cliente con id: {}", venta.getClienteId());
+            }
+        }
 
-    return VentasResponse.builder()
-            .idVenta(venta.getIdVenta())
-            .fechaVenta(venta.getFechaVenta())
-            .subTotal(venta.getSubTotal())
-            .descuentoTotal(venta.getDescuentoTotal())
-            .impuestoTotal(venta.getImpuestoTotal())
-            .total(venta.getTotal())
-            .metodoPago(venta.getMetodoPago())
-            .tipoComprobante(venta.getTipoComprobante())
-            .montoPagado(venta.getMontoPagado())
-            .vuelto(venta.getVuelto())
-            .estadoVenta(venta.getEstadoVenta())
-            .clienteId(venta.getClienteId())
-            .empleadoId(venta.getEmpleadoId())
-            .numeroComprobante(venta.getNumeroComprobante())
-            .observaciones(venta.getObservaciones())
-            .detalles(detalles)
-            .build();
+        // Obtener empleado si existe
+        EmpleadoResponse empleado = null;
+        if (venta.getEmpleadoId() != null) {
+            try {
+                empleado = empleadoClient.obtenerEmpleadoPorId(venta.getEmpleadoId());
+            } catch (Exception e) {
+                log.error("Error al obtener empleado con id: {}", venta.getEmpleadoId());
+            }
+        }
+
+        return VentasResponse.builder()
+                .idVenta(venta.getIdVenta())
+                .fechaVenta(venta.getFechaVenta())
+                .subTotal(venta.getSubTotal())
+                .descuentoTotal(venta.getDescuentoTotal())
+                .impuestoTotal(venta.getImpuestoTotal())
+                .total(venta.getTotal())
+                .metodoPago(venta.getMetodoPago())
+                .tipoComprobante(venta.getTipoComprobante())
+                .montoPagado(venta.getMontoPagado())
+                .vuelto(venta.getVuelto())
+                .estadoVenta(venta.getEstadoVenta())
+                .clienteId(venta.getClienteId())
+                .empleadoId(venta.getEmpleadoId())
+                .numeroComprobante(venta.getNumeroComprobante())
+                .observaciones(venta.getObservaciones())
+                .detalles(detalles)
+                .cliente(cliente)
+                .empleado(empleado)
+                .build();
     }
 
 }

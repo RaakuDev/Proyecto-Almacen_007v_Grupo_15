@@ -4,11 +4,13 @@ import com.almacen.productos_service.dtos.request.InventarioRequest;
 import com.almacen.productos_service.dtos.request.ProductoRequest;
 import com.almacen.productos_service.dtos.response.CategoriaResponse;
 import com.almacen.productos_service.dtos.response.ProductoResponse;
+import com.almacen.productos_service.dtos.response.ProveedorResponse;
 import com.almacen.productos_service.exceptions.NotFoundException;
 import com.almacen.productos_service.models.ProductoModel;
 import com.almacen.productos_service.repositories.ProductoRepository;
 import com.almacen.productos_service.webclient.CategoriaClient;
 import com.almacen.productos_service.webclient.InventarioClient;
+import com.almacen.productos_service.webclient.ProveedorClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -21,15 +23,17 @@ public class ProductoService {
     private final ProductoRepository productoRepository;
     private final CategoriaClient categoriaClient;
     private final InventarioClient inventarioClient;
+    private final ProveedorClient proveedorClient;
 
     public ProductoService(
             ProductoRepository productoRepository,
             CategoriaClient categoriaClient,
-            InventarioClient inventarioClient
+            InventarioClient inventarioClient, ProveedorClient proveedorClient
     ) {
         this.productoRepository = productoRepository;
         this.categoriaClient = categoriaClient;
         this.inventarioClient = inventarioClient;
+        this.proveedorClient = proveedorClient;
     }
 
     public List<ProductoResponse> obtenerTodos() {
@@ -148,12 +152,22 @@ public class ProductoService {
         }
     }
 
+    private ProveedorResponse obtenerProveedorDesdeServicio(Long proveedorId) {
+        try {
+            return proveedorClient.obtenerProveedorPorId(proveedorId);
+        } catch (Exception e) {
+            log.error("No existe el proveedor con id: {}", proveedorId);
+            throw new NotFoundException("No existe el proveedor con id: " + proveedorId);
+        }
+    }
+
     private ProductoResponse mapToResponseConCategoria(ProductoModel producto) {
         CategoriaResponse categoria = obtenerCategoriaDesdeServicio(producto.getCategoriaId());
         return mapToResponse(producto, categoria);
     }
 
     private ProductoResponse mapToResponse(ProductoModel producto, CategoriaResponse categoria) {
+        ProveedorResponse proveedor = obtenerProveedorDesdeServicio(producto.getProveedorId());
         return ProductoResponse.builder()
                 .id(producto.getId())
                 .nombre(producto.getNombre())
@@ -161,6 +175,7 @@ public class ProductoService {
                 .categoriaId(producto.getCategoriaId())
                 .proveedorId(producto.getProveedorId())
                 .categoria(categoria)
+                .proveedor(proveedor)
                 .build();
     }
 }
