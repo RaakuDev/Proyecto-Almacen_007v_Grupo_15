@@ -2,7 +2,7 @@
 <project version="4">
   <component name="CompilerConfiguration">
     <annotationProcessing>
-      <profile name="Annotation profile for ventas-service" enabled="true">
+      <profile name="Annotation profile for inventario-service" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
@@ -13,10 +13,10 @@
         <module name="empleados-service" />
         <module name="service" />
         <module name="proveedores-service" />
+        <module name="categorias-service" />
         <module name="usuarios-service" />
         <module name="pedidos-service" />
         <module name="clientes-service" />
-        <module name="categorias-service" />
         <module name="productos-service" />
         <module name="DetalleVentas-service" />
         <module name="inventario-service" />

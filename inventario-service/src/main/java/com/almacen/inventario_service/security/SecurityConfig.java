@@ -30,6 +30,14 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
 
+                        // Swagger Libre
+                        .requestMatchers(
+                                "/doc/swagger-ui/**",
+                                "/doc/swagger-ui.html",
+                                "/v3/api-docs/**",
+                                "/v3/api-docs"
+                        ).permitAll()
+
                         // Ver inventario: ADMIN y SUPERVISOR
                         .requestMatchers(HttpMethod.GET, "/api/v1/inventario/**")
                         .hasAnyRole("ADMIN", "SUPERVISOR")
