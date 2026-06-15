@@ -1,6 +1,8 @@
 package com.almacen.pedidos_service.webclient;
 
 import com.almacen.pedidos_service.dtos.response.ClienteResponse;
+import com.almacen.pedidos_service.exceptions.NotFoundException;
+import com.almacen.pedidos_service.exceptions.RemoteServiceException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -25,14 +27,14 @@ public class ClienteClient {
                 .uri("/api/v1/clientes/{id}", id)
                 .retrieve()
                 .onStatus(status -> status.is4xxClientError(),
-                        response -> Mono.error(new RuntimeException("Cliente no existe")))
+                        response -> Mono.error(new NotFoundException("Cliente no existe")))
                 .onStatus(status -> status.is5xxServerError(),
-                        response -> Mono.error(new RuntimeException("Error en clientes-service")))
+                        response -> Mono.error(new RemoteServiceException("Error en clientes-service")))
                 .bodyToMono(ClienteResponse.class)
                 .block();
 
         if (cliente == null) {
-            throw new RuntimeException("Cliente no encontrado");
+            throw new NotFoundException("Cliente no encontrado");
         }
 
         return cliente;
