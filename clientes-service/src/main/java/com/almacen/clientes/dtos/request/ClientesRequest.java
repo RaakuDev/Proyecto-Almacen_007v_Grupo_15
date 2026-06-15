@@ -1,29 +1,30 @@
 package com.almacen.clientes.dtos.request;
 
-import jakarta.validation.constraints.Email;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
+
 import lombok.Data;
 
 @Data
 public class ClientesRequest {
+
+    @Schema(description = "Nombre completo del cliente", example = "Juan Pérez")
     @NotBlank(message = "El nombre es obligatorio")
     private String nombre;
 
+    @Schema(description = "RUT del cliente", example = "12.345.678-9")
     @NotBlank(message = "El RUT es obligatorio")
     private String rut;
 
-    @NotBlank(message = "La direccion es obligatoria")
+    @Schema(description = "Dirección del cliente", example = "Av. Providencia 1234, Santiago")
+    @NotBlank(message = "La dirección es obligatoria")
     private String direccion;
 
-    @NotBlank(message = "El telefono es obligatorio")
-    @Pattern(regexp = "^[+0-9]+$", message = "Telefono invalido")
+    @Schema(description = "Teléfono del cliente", example = "+56912345678")
+    @NotBlank(message = "El teléfono es obligatorio")
     private String telefono;
 
+    @Schema(description = "Email del cliente", example = "juan.perez@email.com")
     @NotBlank(message = "El email es obligatorio")
-    @Email(message = "Debe ser un email valido")
     private String email;
-
-
-
 }

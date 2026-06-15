@@ -68,6 +68,8 @@ public class ProductoService {
     public List<ProductoResponse> obtenerPorProveedor(Long proveedorId) {
         log.info("Buscando productos por proveedor con id: {}", proveedorId);
 
+        obtenerProveedorDesdeServicio(proveedorId);
+
         return productoRepository.findByProveedorId(proveedorId)
                 .stream()
                 .map(this::mapToResponseConCategoria)
@@ -78,6 +80,7 @@ public class ProductoService {
         log.info("Guardando nuevo producto: {}", request.getNombre());
 
         CategoriaResponse categoria = obtenerCategoriaDesdeServicio(request.getCategoriaId());
+        ProveedorResponse proveedor = obtenerProveedorDesdeServicio(request.getProveedorId());
 
         ProductoModel producto = new ProductoModel();
         producto.setNombre(request.getNombre());
@@ -116,6 +119,7 @@ public class ProductoService {
                 });
 
         CategoriaResponse categoria = obtenerCategoriaDesdeServicio(request.getCategoriaId());
+        ProveedorResponse proveedor = obtenerProveedorDesdeServicio(request.getProveedorId());
 
         producto.setNombre(request.getNombre());
         producto.setPrecio(request.getPrecio());

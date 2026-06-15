@@ -68,6 +68,7 @@ public class PedidoService {
 
     public PedidosResponse guardar(PedidosRequest request) {
         // 1. Validaciones externas ANTES de abrir transacción de escritura
+        obtenerClienteDesdeServicio(request.getClienteId());
         ProveedorResponse proveedor = obtenerProveedorDesdeServicio(request.getProveedorId());
 
         // Verificación rápida de productos
@@ -91,6 +92,7 @@ public class PedidoService {
         PedidoModel pedido = pedidoRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("No existe el pedido con id: " + id));
 
+        obtenerClienteDesdeServicio(request.getClienteId());
         ProveedorResponse proveedor = obtenerProveedorDesdeServicio(request.getProveedorId());
 
         request.getItems().forEach(item -> productoClient.obtenerProductoPorId(item.getProductoId()));
@@ -185,4 +187,10 @@ public class PedidoService {
             throw new NotFoundException("No existe o no se pudo validar el proveedor con id: " + proveedorId);
         }
     }
-}
+    private void obtenerClienteDesdeServicio(Long clienteId) {
+        try {
+            clienteClient.obtenerClientePorId(clienteId);
+        } catch (Exception e) {
+            throw new NotFoundException("No existe o no se pudo validar el cliente con id: " + clienteId);
+        }
+    }}
