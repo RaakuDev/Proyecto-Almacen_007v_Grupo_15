@@ -10,7 +10,7 @@
         <module name="eureka-server" />
         <module name="gateway-service" />
       </profile>
-      <profile name="Annotation profile for categorias-service" enabled="true">
+      <profile name="Annotation profile for ventas-service" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
@@ -21,10 +21,10 @@
         <module name="empleados-service" />
         <module name="service" />
         <module name="proveedores-service" />
-        <module name="categorias-service" />
         <module name="usuarios-service" />
         <module name="pedidos-service" />
         <module name="clientes-service" />
+        <module name="categorias-service" />
         <module name="productos-service" />
         <module name="DetalleVentas-service" />
         <module name="inventario-service" />
