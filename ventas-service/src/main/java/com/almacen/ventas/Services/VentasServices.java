@@ -266,11 +266,6 @@ public class VentasServices {
         venta.setDescuentoTotal(request.getDescuentoTotal());
         venta.setImpuestoTotal(request.getImpuestoTotal());
         venta.setTotal(request.getTotal());
-
-        empleadoClient.obtenerEmpleadoPorId(request.getEmpleadoId());
-        log.info("Empleado validado correctamente con ID: {}", request.getEmpleadoId());
-
-        Stashed changes
         venta.setMetodoPago(request.getMetodoPago());
         venta.setTipoComprobante(request.getTipoComprobante());
         venta.setMontoPagado(request.getMontoPagado());
@@ -343,7 +338,6 @@ public class VentasServices {
         }
 
         BigDecimal impuesto = subTotal.multiply(BigDecimal.valueOf(0.19));
-
         BigDecimal total = subTotal.subtract(descuento).add(impuesto);
 
         total = BigDecimal.valueOf(

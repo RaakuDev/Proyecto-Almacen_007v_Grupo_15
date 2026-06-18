@@ -119,11 +119,6 @@ public class ProductoService {
 
         obtenerProveedorDesdeServicio(proveedorId);
 
-        return productoRepository.findByProveedorId(proveedorId)
-                .stream()
-
-        obtenerProveedorDesdeServicio(proveedorId);
-
         List<ProductoModel> productos = productoRepository.findByProveedorId(proveedorId);
 
         if (productos.isEmpty()) {
@@ -132,7 +127,6 @@ public class ProductoService {
         }
 
         return productos.stream()
-         Stashed changes
                 .map(this::mapToResponseConCategoria)
                 .toList();
     }
@@ -193,9 +187,6 @@ public class ProductoService {
 
         CategoriaResponse categoria = obtenerCategoriaDesdeServicio(request.getCategoriaId());
         obtenerProveedorDesdeServicio(request.getProveedorId());
-
-        ProveedorResponse proveedor = obtenerProveedorDesdeServicio(request.getProveedorId());
-       main
 
         ProductoModel producto = new ProductoModel();
         producto.setNombre(request.getNombre());
@@ -276,9 +267,6 @@ public class ProductoService {
 
         CategoriaResponse categoria = obtenerCategoriaDesdeServicio(request.getCategoriaId());
         obtenerProveedorDesdeServicio(request.getProveedorId());
-
-        ProveedorResponse proveedor = obtenerProveedorDesdeServicio(request.getProveedorId());
-        main
 
         producto.setNombre(request.getNombre());
         producto.setPrecio(request.getPrecio());
