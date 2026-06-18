@@ -117,10 +117,11 @@ public class ProductoService {
 
         log.info("Buscando productos por proveedor con id: {}", proveedorId);
 
-<<<<<<< Updated upstream
+        obtenerProveedorDesdeServicio(proveedorId);
+
         return productoRepository.findByProveedorId(proveedorId)
                 .stream()
-=======
+
         obtenerProveedorDesdeServicio(proveedorId);
 
         List<ProductoModel> productos = productoRepository.findByProveedorId(proveedorId);
@@ -131,7 +132,7 @@ public class ProductoService {
         }
 
         return productos.stream()
->>>>>>> Stashed changes
+         Stashed changes
                 .map(this::mapToResponseConCategoria)
                 .toList();
     }
@@ -191,10 +192,10 @@ public class ProductoService {
         log.info("Guardando nuevo producto: {}", request.getNombre());
 
         CategoriaResponse categoria = obtenerCategoriaDesdeServicio(request.getCategoriaId());
-<<<<<<< Updated upstream
-=======
         obtenerProveedorDesdeServicio(request.getProveedorId());
->>>>>>> Stashed changes
+
+        ProveedorResponse proveedor = obtenerProveedorDesdeServicio(request.getProveedorId());
+       main
 
         ProductoModel producto = new ProductoModel();
         producto.setNombre(request.getNombre());
@@ -274,10 +275,10 @@ public class ProductoService {
                 });
 
         CategoriaResponse categoria = obtenerCategoriaDesdeServicio(request.getCategoriaId());
-<<<<<<< Updated upstream
-=======
         obtenerProveedorDesdeServicio(request.getProveedorId());
->>>>>>> Stashed changes
+
+        ProveedorResponse proveedor = obtenerProveedorDesdeServicio(request.getProveedorId());
+        main
 
         producto.setNombre(request.getNombre());
         producto.setPrecio(request.getPrecio());

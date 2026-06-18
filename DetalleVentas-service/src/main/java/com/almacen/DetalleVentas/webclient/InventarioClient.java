@@ -1,8 +1,10 @@
 package com.almacen.DetalleVentas.webclient;
 
+import com.almacen.DetalleVentas.exceptions.RemoteServiceException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 @Component
 public class InventarioClient {
@@ -23,6 +25,10 @@ public class InventarioClient {
                 .put()
                 .uri(inventarioServiceUrl + "/api/v1/inventario/producto/" + productoId + "/descontar/" + cantidad)
                 .retrieve()
+                .onStatus(status -> status.is4xxClientError(),
+                        response -> Mono.error(new RemoteServiceException("Error de inventario: no se pudo descontar el stock")))
+                .onStatus(status -> status.is5xxServerError(),
+                        response -> Mono.error(new RemoteServiceException("Error en inventario-service")))
                 .toBodilessEntity()
                 .block();
     }

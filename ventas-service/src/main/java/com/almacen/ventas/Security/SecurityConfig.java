@@ -30,6 +30,14 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
 
+                        // Swagger Libre
+                        .requestMatchers(
+                                "/doc/swagger-ui/**",
+                                "/doc/swagger-ui.html",
+                                "/v3/api-docs/**",
+                                "/v3/api-docs"
+                        ).permitAll()
+
                         // Crear ventas: ADMIN y CAJERO
                         .requestMatchers(HttpMethod.POST, "/api/v1/ventas/**")
                         .hasAnyRole("ADMIN", "CAJERO")

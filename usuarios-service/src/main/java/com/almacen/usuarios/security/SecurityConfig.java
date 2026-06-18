@@ -65,6 +65,14 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/inventario/**")
                         .hasAnyRole("ADMIN", "SUPERVISOR")
 
+                        // Swagger Libre
+                        .requestMatchers(
+                                "/doc/swagger-ui/**",
+                                "/doc/swagger-ui.html",
+                                "/v3/api-docs/**",
+                                "/v3/api-docs"
+                        ).permitAll()
+
                         // REPORTES: ADMIN y SUPERVISOR
                         .requestMatchers("/api/v1/reportes/**")
                         .hasAnyRole("ADMIN", "SUPERVISOR")

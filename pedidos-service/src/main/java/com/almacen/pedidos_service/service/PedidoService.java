@@ -126,9 +126,7 @@ public class PedidoService {
     }
 
     public PedidosResponse guardar(PedidosRequest request) {
-<<<<<<< Updated upstream
         // 1. Validaciones externas ANTES de abrir transacción de escritura
-=======
 
         if (request == null) {
             log.error("Los datos del pedido no pueden ser nulos");
@@ -179,7 +177,9 @@ public class PedidoService {
         }
 
         obtenerClienteDesdeServicio(request.getClienteId());
->>>>>>> Stashed changes
+
+        obtenerClienteDesdeServicio(request.getClienteId());
+  main
         ProveedorResponse proveedor = obtenerProveedorDesdeServicio(request.getProveedorId());
 
         for (PedidoItem item : request.getItems()) {
@@ -273,6 +273,7 @@ public class PedidoService {
                     return new NotFoundException("No existe el pedido con id: " + id);
                 });
 
+        obtenerClienteDesdeServicio(request.getClienteId());
         ProveedorResponse proveedor = obtenerProveedorDesdeServicio(request.getProveedorId());
 
         for (PedidoItem item : request.getItems()) {
@@ -453,8 +454,6 @@ public class PedidoService {
             throw new NotFoundException("No existe o no se pudo validar el proveedor con id: " + proveedorId);
         }
     }
-<<<<<<< Updated upstream
-=======
 
     private void obtenerClienteDesdeServicio(Long clienteId) {
 
@@ -507,5 +506,13 @@ public class PedidoService {
             throw new NotFoundException("No existe o no se pudo validar el producto con id: " + productoId);
         }
     }
->>>>>>> Stashed changes
 }
+
+    private void obtenerClienteDesdeServicio(Long clienteId) {
+        try {
+            clienteClient.obtenerClientePorId(clienteId);
+        } catch (Exception e) {
+            throw new NotFoundException("No existe o no se pudo validar el cliente con id: " + clienteId);
+        }
+    }}
+main

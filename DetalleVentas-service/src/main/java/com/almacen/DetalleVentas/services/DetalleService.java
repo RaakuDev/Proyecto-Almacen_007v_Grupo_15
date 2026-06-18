@@ -129,9 +129,9 @@ public class DetalleService {
                                 request.getVentaId(),
                                 request.getProductoId());
 
-               // ventasClient.validarVenta(request.getVentaId());
+                ventasClient.validarVenta(request.getVentaId());
 
-                //log.info("Venta validada correctamente con ID: {}", request.getVentaId());
+                log.info("Venta validada correctamente con ID: {}", request.getVentaId());
 
                 ProductoResponse producto = productoClient.obtenerProducto(request.getProductoId());
 

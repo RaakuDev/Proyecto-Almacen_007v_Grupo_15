@@ -1,5 +1,25 @@
 services:
 
+  eureka-server:
+    build:
+      context: ./eureka-server
+    container_name: eureka-server
+    restart: always
+    ports:
+      - "8761:8761"
+
+  gateway-service:
+    build:
+      context: ./gateway-service
+    container_name: gateway-service
+    restart: always
+    depends_on:
+      - eureka-server
+    ports:
+      - "8083:8083"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+
   postgres-categorias:
     image: postgres:16
     container_name: postgres-categorias
@@ -254,12 +274,14 @@ services:
     restart: always
     depends_on:
       - postgres-usuarios
+      - eureka-server
     ports:
       - "8093:8093"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-usuarios:5432/usuarios_db
       SPRING_DATASOURCE_USERNAME: admin
       SPRING_DATASOURCE_PASSWORD: admin123
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
 
   categorias-service:
     build:
@@ -268,12 +290,14 @@ services:
     restart: always
     depends_on:
       - postgres-categorias
+      - eureka-server
     ports:
       - "8084:8084"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-categorias:5432/categorias_db
       SPRING_DATASOURCE_USERNAME: admin
       SPRING_DATASOURCE_PASSWORD: admin123
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
 
   productos-service:
     build:
@@ -285,6 +309,7 @@ services:
       - categorias-service
       - inventario-service
       - proveedores-service
+      - eureka-server
     ports:
       - "8085:8085"
     environment:
@@ -294,6 +319,7 @@ services:
       CATEGORIA_SERVICE_URL: http://categorias-service:8084
       INVENTARIO_SERVICE_URL: http://inventario-service:8090
       PROVEEDOR_SERVICE_URL: http://proveedores-service:8086
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
 
   inventario-service:
     build:
@@ -302,6 +328,7 @@ services:
     restart: always
     depends_on:
       - postgres-inventario
+      - eureka-server
     ports:
       - "8090:8090"
     environment:
@@ -309,6 +336,7 @@ services:
       SPRING_DATASOURCE_USERNAME: admin
       SPRING_DATASOURCE_PASSWORD: admin123
       PRODUCTO_SERVICE_URL: http://productos-service:8085
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
 
   proveedores-service:
     build:
@@ -317,6 +345,7 @@ services:
     restart: always
     depends_on:
       - postgres-proveedores
+      - eureka-server
     ports:
       - "8086:8086"
     environment:
@@ -324,6 +353,7 @@ services:
       SPRING_DATASOURCE_USERNAME: admin
       SPRING_DATASOURCE_PASSWORD: admin123
       PRODUCTO_SERVICE_URL: http://productos-service:8085
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
 
   clientes-service:
     build:
@@ -332,6 +362,7 @@ services:
     restart: always
     depends_on:
       - postgres-clientes
+      - eureka-server
     ports:
       - "8087:8087"
     environment:
@@ -339,6 +370,7 @@ services:
       SPRING_DATASOURCE_USERNAME: admin
       SPRING_DATASOURCE_PASSWORD: admin123
       PEDIDO_SERVICE_URL: http://pedidos-service:8092
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
 
   empleados-service:
     build:
@@ -347,6 +379,7 @@ services:
     restart: always
     depends_on:
       - postgres-empleados
+      - eureka-server
     ports:
       - "8091:8091"
     environment:
@@ -354,6 +387,7 @@ services:
       SPRING_DATASOURCE_USERNAME: admin
       SPRING_DATASOURCE_PASSWORD: admin123
       VENTA_SERVICE_URL: http://ventas-service:8088
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
 
   ventas-service:
     build:
@@ -364,6 +398,7 @@ services:
       - postgres-ventas
       - clientes-service
       - empleados-service
+      - eureka-server
     ports:
       - "8088:8088"
     environment:
@@ -373,6 +408,7 @@ services:
       CLIENTE_SERVICE_URL: http://clientes-service:8087
       DETALLEVENTAS_SERVICE_URL: http://detalle-venta-service:8089
       EMPLEADO_SERVICE_URL: http://empleados-service:8091
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
 
   detalle-venta-service:
     build:
@@ -384,6 +420,7 @@ services:
       - inventario-service
       - productos-service
       - ventas-service
+      - eureka-server
     ports:
       - "8089:8089"
     environment:
@@ -393,6 +430,7 @@ services:
       PRODUCTO_SERVICE_URL: http://productos-service:8085
       VENTA_SERVICE_URL: http://ventas-service:8088
       INVENTARIO_SERVICE_URL: http://inventario-service:8090
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
 
   postgres-detalle-venta-test:
     image: postgres:16
@@ -415,14 +453,14 @@ services:
     depends_on:
       - postgres-pedidos
       - proveedores-service
-      - productos-service
-      - clientes-service
+      - eureka-server
     ports:
       - "8092:8092"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-pedidos:5432/pedidos_db
       SPRING_DATASOURCE_USERNAME: admin
       SPRING_DATASOURCE_PASSWORD: admin123
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       PROVEEDOR_SERVICE_URL: http://proveedores-service:8086
       PRODUCTO_SERVICE_URL: http://productos-service:8085
       CLIENTE_SERVICE_URL: http://clientes-service:8087

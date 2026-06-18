@@ -147,14 +147,14 @@ public class VentasServices {
         log.info("Guardando nueva venta");
 
         if (request.getClienteId() != null) {
-
-            log.info("Cliente validado correctamente con ID: {}",
-                    request.getClienteId());
-
+            clienteClient.obtenerClientePorId(request.getClienteId());
+            log.info("Cliente validado correctamente con ID: {}", request.getClienteId());
         } else {
-
             log.info("Venta sin cliente asociado");
         }
+
+        empleadoClient.obtenerEmpleadoPorId(request.getEmpleadoId());
+        log.info("Empleado validado correctamente con ID: {}", request.getEmpleadoId());
 
         VentasModel venta = VentasModel.builder()
                 .fechaVenta(LocalDateTime.now())
@@ -253,21 +253,24 @@ public class VentasServices {
                 });
 
         if (request.getClienteId() != null) {
+            clienteClient.obtenerClientePorId(request.getClienteId());
             log.info("Cliente validado correctamente con ID: {}", request.getClienteId());
         } else {
             log.info("Venta actualizada sin cliente asociado");
         }
 
-<<<<<<< Updated upstream
+        empleadoClient.obtenerEmpleadoPorId(request.getEmpleadoId());
+        log.info("Empleado validado correctamente con ID: {}", request.getEmpleadoId());
+
         venta.setSubTotal(request.getSubTotal());
         venta.setDescuentoTotal(request.getDescuentoTotal());
         venta.setImpuestoTotal(request.getImpuestoTotal());
         venta.setTotal(request.getTotal());
-=======
+
         empleadoClient.obtenerEmpleadoPorId(request.getEmpleadoId());
         log.info("Empleado validado correctamente con ID: {}", request.getEmpleadoId());
 
->>>>>>> Stashed changes
+        Stashed changes
         venta.setMetodoPago(request.getMetodoPago());
         venta.setTipoComprobante(request.getTipoComprobante());
         venta.setMontoPagado(request.getMontoPagado());
