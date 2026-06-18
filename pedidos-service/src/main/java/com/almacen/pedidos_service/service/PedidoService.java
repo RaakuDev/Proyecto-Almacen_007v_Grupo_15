@@ -1,28 +1,28 @@
 package com.almacen.pedidos_service.service;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.Collections;
 
 import com.almacen.pedidos_service.dtos.request.PedidoItem;
+import com.almacen.pedidos_service.dtos.request.PedidosRequest;
 import com.almacen.pedidos_service.dtos.response.ClienteResponse;
+import com.almacen.pedidos_service.dtos.response.PedidosResponse;
 import com.almacen.pedidos_service.dtos.response.ProductoResponse;
 import com.almacen.pedidos_service.dtos.response.ProveedorResponse;
-import com.almacen.pedidos_service.webclient.ClienteClient;
-import com.almacen.pedidos_service.webclient.ProductoClient;
-import com.almacen.pedidos_service.webclient.ProveedorClient;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import com.almacen.pedidos_service.dtos.response.PedidosResponse;
-import com.almacen.pedidos_service.dtos.request.PedidosRequest;
 import com.almacen.pedidos_service.exceptions.NotFoundException;
 import com.almacen.pedidos_service.model.PedidoModel;
 import com.almacen.pedidos_service.repository.PedidoRepository;
+import com.almacen.pedidos_service.webclient.ClienteClient;
+import com.almacen.pedidos_service.webclient.ProductoClient;
+import com.almacen.pedidos_service.webclient.ProveedorClient;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -36,7 +36,6 @@ public class PedidoService {
 
     @Transactional(readOnly = true)
     public List<PedidosResponse> obtenerTodos() {
-
         log.info("Obteniendo todos los pedidos");
 
         List<PedidoModel> pedidos = pedidoRepository.findAll();
@@ -53,16 +52,7 @@ public class PedidoService {
 
     @Transactional(readOnly = true)
     public PedidosResponse obtenerPorId(Long id) {
-
-        if (id == null) {
-            log.error("El id del pedido no puede ser nulo");
-            throw new NotFoundException("El id del pedido no puede ser nulo");
-        }
-
-        if (id <= 0) {
-            log.error("El id del pedido debe ser mayor a cero");
-            throw new NotFoundException("El id del pedido debe ser mayor a cero");
-        }
+        validarIdPedido(id);
 
         log.info("Buscando pedido con id: {}", id);
 
@@ -76,16 +66,7 @@ public class PedidoService {
 
     @Transactional(readOnly = true)
     public List<PedidosResponse> obtenerPorCliente(Long clienteId) {
-
-        if (clienteId == null) {
-            log.error("El id del cliente no puede ser nulo");
-            throw new NotFoundException("El id del cliente no puede ser nulo");
-        }
-
-        if (clienteId <= 0) {
-            log.error("El id del cliente debe ser mayor a cero");
-            throw new NotFoundException("El id del cliente debe ser mayor a cero");
-        }
+        validarIdCliente(clienteId);
 
         log.info("Buscando pedidos del cliente con id: {}", clienteId);
 
@@ -105,7 +86,6 @@ public class PedidoService {
 
     @Transactional(readOnly = true)
     public List<PedidosResponse> obtenerPorEstado(String estado) {
-
         if (estado == null || estado.trim().isEmpty()) {
             log.error("El estado del pedido no puede ser nulo o vacío");
             throw new NotFoundException("El estado del pedido no puede ser nulo o vacío");
@@ -125,70 +105,15 @@ public class PedidoService {
                 .toList();
     }
 
+    @Transactional
     public PedidosResponse guardar(PedidosRequest request) {
-        // 1. Validaciones externas ANTES de abrir transacción de escritura
-
-        if (request == null) {
-            log.error("Los datos del pedido no pueden ser nulos");
-            throw new NotFoundException("Los datos del pedido no pueden ser nulos");
-        }
-
-        if (request.getFechaPedido() == null) {
-            log.error("La fecha del pedido es obligatoria");
-            throw new NotFoundException("La fecha del pedido es obligatoria");
-        }
-
-        if (request.getEstado() == null || request.getEstado().trim().isEmpty()) {
-            log.error("El estado del pedido es obligatorio");
-            throw new NotFoundException("El estado del pedido es obligatorio");
-        }
-
-        if (request.getProveedorId() == null || request.getProveedorId() <= 0) {
-            log.error("El id del proveedor es obligatorio y debe ser mayor a cero");
-            throw new NotFoundException("El id del proveedor es obligatorio y debe ser mayor a cero");
-        }
-
-        if (request.getClienteId() == null || request.getClienteId() <= 0) {
-            log.error("El id del cliente es obligatorio y debe ser mayor a cero");
-            throw new NotFoundException("El id del cliente es obligatorio y debe ser mayor a cero");
-        }
-
-        if (request.getItems() == null || request.getItems().isEmpty()) {
-            log.error("El pedido debe tener al menos un producto");
-            throw new NotFoundException("El pedido debe tener al menos un producto");
-        }
-
-        for (PedidoItem item : request.getItems()) {
-
-            if (item == null) {
-                log.error("El item del pedido no puede ser nulo");
-                throw new NotFoundException("El item del pedido no puede ser nulo");
-            }
-
-            if (item.getProductoId() == null || item.getProductoId() <= 0) {
-                log.error("El id del producto es obligatorio y debe ser mayor a cero");
-                throw new NotFoundException("El id del producto es obligatorio y debe ser mayor a cero");
-            }
-
-            if (item.getCantidad() == null || item.getCantidad() <= 0) {
-                log.error("La cantidad del producto debe ser mayor a cero");
-                throw new NotFoundException("La cantidad del producto debe ser mayor a cero");
-            }
-        }
+        validarRequestPedido(request);
 
         obtenerClienteDesdeServicio(request.getClienteId());
-
-        obtenerClienteDesdeServicio(request.getClienteId());
-  main
         ProveedorResponse proveedor = obtenerProveedorDesdeServicio(request.getProveedorId());
 
         for (PedidoItem item : request.getItems()) {
-            ProductoResponse producto = obtenerProductoDesdeServicio(item.getProductoId());
-
-            if (producto == null) {
-                log.error("No existe el producto con id: {}", item.getProductoId());
-                throw new NotFoundException("No existe el producto con id: " + item.getProductoId());
-            }
+            obtenerProductoDesdeServicio(item.getProductoId());
         }
 
         PedidoModel pedido = new PedidoModel();
@@ -207,65 +132,10 @@ public class PedidoService {
         return toResponse(guardado, proveedor);
     }
 
+    @Transactional
     public PedidosResponse actualizar(Long id, PedidosRequest request) {
-
-        if (id == null) {
-            log.error("El id del pedido no puede ser nulo");
-            throw new NotFoundException("El id del pedido no puede ser nulo");
-        }
-
-        if (id <= 0) {
-            log.error("El id del pedido debe ser mayor a cero");
-            throw new NotFoundException("El id del pedido debe ser mayor a cero");
-        }
-
-        if (request == null) {
-            log.error("Los datos del pedido no pueden ser nulos");
-            throw new NotFoundException("Los datos del pedido no pueden ser nulos");
-        }
-
-        if (request.getFechaPedido() == null) {
-            log.error("La fecha del pedido es obligatoria");
-            throw new NotFoundException("La fecha del pedido es obligatoria");
-        }
-
-        if (request.getEstado() == null || request.getEstado().trim().isEmpty()) {
-            log.error("El estado del pedido es obligatorio");
-            throw new NotFoundException("El estado del pedido es obligatorio");
-        }
-
-        if (request.getProveedorId() == null || request.getProveedorId() <= 0) {
-            log.error("El id del proveedor es obligatorio y debe ser mayor a cero");
-            throw new NotFoundException("El id del proveedor es obligatorio y debe ser mayor a cero");
-        }
-
-        if (request.getClienteId() == null || request.getClienteId() <= 0) {
-            log.error("El id del cliente es obligatorio y debe ser mayor a cero");
-            throw new NotFoundException("El id del cliente es obligatorio y debe ser mayor a cero");
-        }
-
-        if (request.getItems() == null || request.getItems().isEmpty()) {
-            log.error("El pedido debe tener al menos un producto");
-            throw new NotFoundException("El pedido debe tener al menos un producto");
-        }
-
-        for (PedidoItem item : request.getItems()) {
-
-            if (item == null) {
-                log.error("El item del pedido no puede ser nulo");
-                throw new NotFoundException("El item del pedido no puede ser nulo");
-            }
-
-            if (item.getProductoId() == null || item.getProductoId() <= 0) {
-                log.error("El id del producto es obligatorio y debe ser mayor a cero");
-                throw new NotFoundException("El id del producto es obligatorio y debe ser mayor a cero");
-            }
-
-            if (item.getCantidad() == null || item.getCantidad() <= 0) {
-                log.error("La cantidad del producto debe ser mayor a cero");
-                throw new NotFoundException("La cantidad del producto debe ser mayor a cero");
-            }
-        }
+        validarIdPedido(id);
+        validarRequestPedido(request);
 
         PedidoModel pedido = pedidoRepository.findById(id)
                 .orElseThrow(() -> {
@@ -277,12 +147,7 @@ public class PedidoService {
         ProveedorResponse proveedor = obtenerProveedorDesdeServicio(request.getProveedorId());
 
         for (PedidoItem item : request.getItems()) {
-            ProductoResponse producto = obtenerProductoDesdeServicio(item.getProductoId());
-
-            if (producto == null) {
-                log.error("No existe el producto con id: {}", item.getProductoId());
-                throw new NotFoundException("No existe el producto con id: " + item.getProductoId());
-            }
+            obtenerProductoDesdeServicio(item.getProductoId());
         }
 
         pedido.setFechaPedido(request.getFechaPedido());
@@ -300,17 +165,9 @@ public class PedidoService {
         return toResponse(actualizado, proveedor);
     }
 
+    @Transactional
     public PedidosResponse cambiarEstado(Long id, String estado) {
-
-        if (id == null) {
-            log.error("El id del pedido no puede ser nulo");
-            throw new NotFoundException("El id del pedido no puede ser nulo");
-        }
-
-        if (id <= 0) {
-            log.error("El id del pedido debe ser mayor a cero");
-            throw new NotFoundException("El id del pedido debe ser mayor a cero");
-        }
+        validarIdPedido(id);
 
         if (estado == null || estado.trim().isEmpty()) {
             log.error("El estado del pedido no puede ser nulo o vacío");
@@ -332,17 +189,9 @@ public class PedidoService {
         return toResponse(actualizado);
     }
 
+    @Transactional
     public void eliminar(Long id) {
-
-        if (id == null) {
-            log.error("El id del pedido no puede ser nulo");
-            throw new NotFoundException("El id del pedido no puede ser nulo");
-        }
-
-        if (id <= 0) {
-            log.error("El id del pedido debe ser mayor a cero");
-            throw new NotFoundException("El id del pedido debe ser mayor a cero");
-        }
+        validarIdPedido(id);
 
         if (!pedidoRepository.existsById(id)) {
             log.error("No existe el pedido con id: {}", id);
@@ -355,7 +204,6 @@ public class PedidoService {
     }
 
     private PedidosResponse toResponse(PedidoModel model, ProveedorResponse proveedor) {
-
         if (model == null) {
             log.error("El pedido no puede ser nulo");
             throw new NotFoundException("El pedido no puede ser nulo");
@@ -367,6 +215,7 @@ public class PedidoService {
                         .map(entry -> {
                             try {
                                 String[] partes = entry.trim().split(":");
+
                                 Long productoId = Long.parseLong(partes[0]);
                                 Integer cantidad = Integer.parseInt(partes[1]);
 
@@ -379,11 +228,11 @@ public class PedidoService {
                                 return producto;
 
                             } catch (Exception e) {
-                                log.error("Error procesando producto en entry: {}", entry);
+                                log.error("Error procesando producto en entry: {}", entry, e);
                                 return null;
                             }
                         })
-                        .filter(p -> p != null)
+                        .filter(producto -> producto != null)
                         .toList();
 
         ClienteResponse cliente = null;
@@ -409,7 +258,6 @@ public class PedidoService {
     }
 
     private PedidosResponse toResponse(PedidoModel model) {
-
         if (model == null) {
             log.error("El pedido no puede ser nulo");
             throw new NotFoundException("El pedido no puede ser nulo");
@@ -421,7 +269,7 @@ public class PedidoService {
             try {
                 proveedor = proveedorClient.obtenerProveedorPorId(model.getProveedorId());
             } catch (Exception e) {
-                log.error("Error al obtener proveedor para el response");
+                log.error("Error al obtener proveedor para el response", e);
             }
         }
 
@@ -429,16 +277,7 @@ public class PedidoService {
     }
 
     private ProveedorResponse obtenerProveedorDesdeServicio(Long proveedorId) {
-
-        if (proveedorId == null) {
-            log.error("El id del proveedor no puede ser nulo");
-            throw new NotFoundException("El id del proveedor no puede ser nulo");
-        }
-
-        if (proveedorId <= 0) {
-            log.error("El id del proveedor debe ser mayor a cero");
-            throw new NotFoundException("El id del proveedor debe ser mayor a cero");
-        }
+        validarIdProveedor(proveedorId);
 
         try {
             ProveedorResponse proveedor = proveedorClient.obtenerProveedorPorId(proveedorId);
@@ -456,16 +295,7 @@ public class PedidoService {
     }
 
     private void obtenerClienteDesdeServicio(Long clienteId) {
-
-        if (clienteId == null) {
-            log.error("El id del cliente no puede ser nulo");
-            throw new NotFoundException("El id del cliente no puede ser nulo");
-        }
-
-        if (clienteId <= 0) {
-            log.error("El id del cliente debe ser mayor a cero");
-            throw new NotFoundException("El id del cliente debe ser mayor a cero");
-        }
+        validarIdCliente(clienteId);
 
         try {
             ClienteResponse cliente = clienteClient.obtenerClientePorId(clienteId);
@@ -481,16 +311,7 @@ public class PedidoService {
     }
 
     private ProductoResponse obtenerProductoDesdeServicio(Long productoId) {
-
-        if (productoId == null) {
-            log.error("El id del producto no puede ser nulo");
-            throw new NotFoundException("El id del producto no puede ser nulo");
-        }
-
-        if (productoId <= 0) {
-            log.error("El id del producto debe ser mayor a cero");
-            throw new NotFoundException("El id del producto debe ser mayor a cero");
-        }
+        validarIdProducto(productoId);
 
         try {
             ProductoResponse producto = productoClient.obtenerProductoPorId(productoId);
@@ -506,13 +327,91 @@ public class PedidoService {
             throw new NotFoundException("No existe o no se pudo validar el producto con id: " + productoId);
         }
     }
-}
 
-    private void obtenerClienteDesdeServicio(Long clienteId) {
-        try {
-            clienteClient.obtenerClientePorId(clienteId);
-        } catch (Exception e) {
-            throw new NotFoundException("No existe o no se pudo validar el cliente con id: " + clienteId);
+    private void validarRequestPedido(PedidosRequest request) {
+        if (request == null) {
+            log.error("Los datos del pedido no pueden ser nulos");
+            throw new NotFoundException("Los datos del pedido no pueden ser nulos");
         }
-    }}
-main
+
+        if (request.getFechaPedido() == null) {
+            log.error("La fecha del pedido es obligatoria");
+            throw new NotFoundException("La fecha del pedido es obligatoria");
+        }
+
+        if (request.getEstado() == null || request.getEstado().trim().isEmpty()) {
+            log.error("El estado del pedido es obligatorio");
+            throw new NotFoundException("El estado del pedido es obligatorio");
+        }
+
+        validarIdProveedor(request.getProveedorId());
+        validarIdCliente(request.getClienteId());
+
+        if (request.getItems() == null || request.getItems().isEmpty()) {
+            log.error("El pedido debe tener al menos un producto");
+            throw new NotFoundException("El pedido debe tener al menos un producto");
+        }
+
+        for (PedidoItem item : request.getItems()) {
+            if (item == null) {
+                log.error("El item del pedido no puede ser nulo");
+                throw new NotFoundException("El item del pedido no puede ser nulo");
+            }
+
+            validarIdProducto(item.getProductoId());
+
+            if (item.getCantidad() == null || item.getCantidad() <= 0) {
+                log.error("La cantidad del producto debe ser mayor a cero");
+                throw new NotFoundException("La cantidad del producto debe ser mayor a cero");
+            }
+        }
+    }
+
+    private void validarIdPedido(Long id) {
+        if (id == null) {
+            log.error("El id del pedido no puede ser nulo");
+            throw new NotFoundException("El id del pedido no puede ser nulo");
+        }
+
+        if (id <= 0) {
+            log.error("El id del pedido debe ser mayor a cero");
+            throw new NotFoundException("El id del pedido debe ser mayor a cero");
+        }
+    }
+
+    private void validarIdProveedor(Long proveedorId) {
+        if (proveedorId == null) {
+            log.error("El id del proveedor no puede ser nulo");
+            throw new NotFoundException("El id del proveedor no puede ser nulo");
+        }
+
+        if (proveedorId <= 0) {
+            log.error("El id del proveedor debe ser mayor a cero");
+            throw new NotFoundException("El id del proveedor debe ser mayor a cero");
+        }
+    }
+
+    private void validarIdCliente(Long clienteId) {
+        if (clienteId == null) {
+            log.error("El id del cliente no puede ser nulo");
+            throw new NotFoundException("El id del cliente no puede ser nulo");
+        }
+
+        if (clienteId <= 0) {
+            log.error("El id del cliente debe ser mayor a cero");
+            throw new NotFoundException("El id del cliente debe ser mayor a cero");
+        }
+    }
+
+    private void validarIdProducto(Long productoId) {
+        if (productoId == null) {
+            log.error("El id del producto no puede ser nulo");
+            throw new NotFoundException("El id del producto no puede ser nulo");
+        }
+
+        if (productoId <= 0) {
+            log.error("El id del producto debe ser mayor a cero");
+            throw new NotFoundException("El id del producto debe ser mayor a cero");
+        }
+    }
+}
