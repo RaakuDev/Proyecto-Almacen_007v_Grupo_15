@@ -4,13 +4,12 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import com.almacen.ventas.dtos.response.ClienteResponse;
-import com.almacen.ventas.dtos.response.EmpleadoResponse;
-import com.almacen.ventas.webclient.EmpleadoClient;
-import org.springframework.stereotype.Service;
-
+import com.almacen.ventas.dtos.request.DetalleVentaRequest;
+import com.almacen.ventas.dtos.request.ItemVentaRequest;
 import com.almacen.ventas.dtos.request.VentasRequest;
+import com.almacen.ventas.dtos.response.ClienteResponse;
 import com.almacen.ventas.dtos.response.DetalleVentaResponse;
+import com.almacen.ventas.dtos.response.EmpleadoResponse;
 import com.almacen.ventas.dtos.response.VentasResponse;
 import com.almacen.ventas.enums.EstadoVentas;
 import com.almacen.ventas.exceptions.NotFoundException;
@@ -18,8 +17,10 @@ import com.almacen.ventas.models.VentasModel;
 import com.almacen.ventas.repositories.VentasRepository;
 import com.almacen.ventas.webclient.ClienteClient;
 import com.almacen.ventas.webclient.DetalleVentaClient;
+import com.almacen.ventas.webclient.EmpleadoClient;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
@@ -33,7 +34,8 @@ public class VentasServices {
     public VentasServices(
             VentasRepository ventasRepository,
             ClienteClient clienteClient,
-            DetalleVentaClient detalleVentaClient, EmpleadoClient empleadoClient) {
+            DetalleVentaClient detalleVentaClient,
+            EmpleadoClient empleadoClient) {
         this.ventasRepository = ventasRepository;
         this.clienteClient = clienteClient;
         this.detalleVentaClient = detalleVentaClient;
@@ -43,13 +45,30 @@ public class VentasServices {
     public List<VentasResponse> obtenerTodas() {
         log.info("Obteniendo todas las ventas");
 
-        return ventasRepository.findAll()
-                .stream()
+        List<VentasModel> ventas = ventasRepository.findAll();
+
+        if (ventas.isEmpty()) {
+            log.error("No existen ventas registradas");
+            throw new NotFoundException("No existen ventas registradas");
+        }
+
+        return ventas.stream()
                 .map(this::toResponse)
                 .toList();
     }
 
     public VentasResponse obtenerPorId(Long id) {
+
+        if (id == null) {
+            log.error("El id de la venta no puede ser nulo");
+            throw new NotFoundException("El id de la venta no puede ser nulo");
+        }
+
+        if (id <= 0) {
+            log.error("El id de la venta debe ser mayor a cero");
+            throw new NotFoundException("El id de la venta debe ser mayor a cero");
+        }
+
         log.info("Buscando venta con ID: {}", id);
 
         return ventasRepository.findById(id)
@@ -61,6 +80,69 @@ public class VentasServices {
     }
 
     public VentasResponse guardar(VentasRequest request) {
+
+        if (request == null) {
+            log.error("Los datos de la venta no pueden ser nulos");
+            throw new NotFoundException("Los datos de la venta no pueden ser nulos");
+        }
+
+        if (request.getClienteId() != null && request.getClienteId() <= 0) {
+            log.error("El id del cliente debe ser mayor a cero");
+            throw new NotFoundException("El id del cliente debe ser mayor a cero");
+        }
+
+        if (request.getEmpleadoId() == null || request.getEmpleadoId() <= 0) {
+            log.error("El id del empleado es obligatorio y debe ser mayor a cero");
+            throw new NotFoundException("El id del empleado es obligatorio y debe ser mayor a cero");
+        }
+
+        if (request.getMetodoPago() == null) {
+            log.error("El método de pago es obligatorio");
+            throw new NotFoundException("El método de pago es obligatorio");
+        }
+
+        if (request.getTipoComprobante() == null) {
+            log.error("El tipo de comprobante es obligatorio");
+            throw new NotFoundException("El tipo de comprobante es obligatorio");
+        }
+
+        if (request.getMontoPagado() == null) {
+            log.error("El monto pagado es obligatorio");
+            throw new NotFoundException("El monto pagado es obligatorio");
+        }
+
+        if (request.getMontoPagado().compareTo(BigDecimal.ZERO) < 0) {
+            log.error("El monto pagado no puede ser negativo");
+            throw new NotFoundException("El monto pagado no puede ser negativo");
+        }
+
+        if (request.getNumeroComprobante() == null || request.getNumeroComprobante().trim().isEmpty()) {
+            log.error("El número de comprobante es obligatorio");
+            throw new NotFoundException("El número de comprobante es obligatorio");
+        }
+
+        if (request.getItems() == null || request.getItems().isEmpty()) {
+            log.error("La venta debe tener al menos un item");
+            throw new NotFoundException("La venta debe tener al menos un item");
+        }
+
+        for (ItemVentaRequest item : request.getItems()) {
+
+            if (item == null) {
+                log.error("El item de la venta no puede ser nulo");
+                throw new NotFoundException("El item de la venta no puede ser nulo");
+            }
+
+            if (item.getProductoId() == null || item.getProductoId() <= 0) {
+                log.error("El id del producto es obligatorio y debe ser mayor a cero");
+                throw new NotFoundException("El id del producto es obligatorio y debe ser mayor a cero");
+            }
+
+            if (item.getCantidad() == null || item.getCantidad() <= 0) {
+                log.error("La cantidad del producto debe ser mayor a cero");
+                throw new NotFoundException("La cantidad del producto debe ser mayor a cero");
+            }
+        }
 
         log.info("Guardando nueva venta");
 
@@ -93,27 +175,75 @@ public class VentasServices {
 
         VentasModel guardada = ventasRepository.save(venta);
 
-        log.info("Venta creada correctamente con ID: {}",
-                guardada.getIdVenta());
+        log.info("Venta creada correctamente con ID: {}", guardada.getIdVenta());
 
         request.getItems().forEach(item -> {
 
             detalleVentaClient.crearDetalle(
-
-                    com.almacen.ventas.dtos.request.DetalleVentaRequest.builder()
+                    DetalleVentaRequest.builder()
                             .ventaId(guardada.getIdVenta())
                             .productoId(item.getProductoId())
                             .cantidad(item.getCantidad())
                             .build());
 
-            log.info("Detalle creado automáticamente para producto ID: {}",
-                    item.getProductoId());
+            log.info("Detalle creado automáticamente para producto ID: {}", item.getProductoId());
         });
 
         return recalcularTotal(guardada.getIdVenta());
     }
 
     public VentasResponse actualizar(Long id, VentasRequest request) {
+
+        if (id == null) {
+            log.error("El id de la venta no puede ser nulo");
+            throw new NotFoundException("El id de la venta no puede ser nulo");
+        }
+
+        if (id <= 0) {
+            log.error("El id de la venta debe ser mayor a cero");
+            throw new NotFoundException("El id de la venta debe ser mayor a cero");
+        }
+
+        if (request == null) {
+            log.error("Los datos de la venta no pueden ser nulos");
+            throw new NotFoundException("Los datos de la venta no pueden ser nulos");
+        }
+
+        if (request.getClienteId() != null && request.getClienteId() <= 0) {
+            log.error("El id del cliente debe ser mayor a cero");
+            throw new NotFoundException("El id del cliente debe ser mayor a cero");
+        }
+
+        if (request.getEmpleadoId() == null || request.getEmpleadoId() <= 0) {
+            log.error("El id del empleado es obligatorio y debe ser mayor a cero");
+            throw new NotFoundException("El id del empleado es obligatorio y debe ser mayor a cero");
+        }
+
+        if (request.getMetodoPago() == null) {
+            log.error("El método de pago es obligatorio");
+            throw new NotFoundException("El método de pago es obligatorio");
+        }
+
+        if (request.getTipoComprobante() == null) {
+            log.error("El tipo de comprobante es obligatorio");
+            throw new NotFoundException("El tipo de comprobante es obligatorio");
+        }
+
+        if (request.getMontoPagado() == null) {
+            log.error("El monto pagado es obligatorio");
+            throw new NotFoundException("El monto pagado es obligatorio");
+        }
+
+        if (request.getMontoPagado().compareTo(BigDecimal.ZERO) < 0) {
+            log.error("El monto pagado no puede ser negativo");
+            throw new NotFoundException("El monto pagado no puede ser negativo");
+        }
+
+        if (request.getNumeroComprobante() == null || request.getNumeroComprobante().trim().isEmpty()) {
+            log.error("El número de comprobante es obligatorio");
+            throw new NotFoundException("El número de comprobante es obligatorio");
+        }
+
         log.info("Actualizando venta con ID: {}", id);
 
         VentasModel venta = ventasRepository.findById(id)
@@ -128,14 +258,19 @@ public class VentasServices {
             log.info("Venta actualizada sin cliente asociado");
         }
 
+<<<<<<< Updated upstream
         venta.setSubTotal(request.getSubTotal());
         venta.setDescuentoTotal(request.getDescuentoTotal());
         venta.setImpuestoTotal(request.getImpuestoTotal());
         venta.setTotal(request.getTotal());
+=======
+        empleadoClient.obtenerEmpleadoPorId(request.getEmpleadoId());
+        log.info("Empleado validado correctamente con ID: {}", request.getEmpleadoId());
+
+>>>>>>> Stashed changes
         venta.setMetodoPago(request.getMetodoPago());
         venta.setTipoComprobante(request.getTipoComprobante());
         venta.setMontoPagado(request.getMontoPagado());
-        venta.setVuelto(request.getVuelto());
         venta.setClienteId(request.getClienteId());
         venta.setEmpleadoId(request.getEmpleadoId());
         venta.setNumeroComprobante(request.getNumeroComprobante());
@@ -145,10 +280,16 @@ public class VentasServices {
 
         log.info("Venta actualizada correctamente con ID: {}", actualizada.getIdVenta());
 
-        return toResponse(actualizada);
+        return recalcularTotal(actualizada.getIdVenta());
     }
 
     public VentasResponse obtenerPorNumeroComprobante(String numeroComprobante) {
+
+        if (numeroComprobante == null || numeroComprobante.trim().isEmpty()) {
+            log.error("El número de comprobante no puede ser nulo o vacío");
+            throw new NotFoundException("El número de comprobante no puede ser nulo o vacío");
+        }
+
         return ventasRepository.findByNumeroComprobante(numeroComprobante)
                 .map(this::toResponse)
                 .orElseThrow(() -> new NotFoundException(
@@ -156,6 +297,17 @@ public class VentasServices {
     }
 
     public VentasResponse recalcularTotal(Long idVenta) {
+
+        if (idVenta == null) {
+            log.error("El id de la venta no puede ser nulo");
+            throw new NotFoundException("El id de la venta no puede ser nulo");
+        }
+
+        if (idVenta <= 0) {
+            log.error("El id de la venta debe ser mayor a cero");
+            throw new NotFoundException("El id de la venta debe ser mayor a cero");
+        }
+
         log.info("Recalculando total de venta con ID: {}", idVenta);
 
         VentasModel venta = ventasRepository.findById(idVenta)
@@ -166,15 +318,26 @@ public class VentasServices {
 
         List<DetalleVentaResponse> detalles = detalleVentaClient.obtenerDetallesPorVenta(idVenta);
 
+        if (detalles == null || detalles.isEmpty()) {
+            log.error("La venta no tiene detalles asociados");
+            throw new NotFoundException("La venta no tiene detalles asociados");
+        }
+
         log.info("Detalles obtenidos correctamente para venta ID: {}", idVenta);
 
         BigDecimal subTotal = detalles.stream()
                 .map(DetalleVentaResponse::getSubTotal)
+                .filter(sub -> sub != null)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal descuento = venta.getDescuentoTotal() != null
                 ? venta.getDescuentoTotal()
                 : BigDecimal.ZERO;
+
+        if (descuento.compareTo(BigDecimal.ZERO) < 0) {
+            log.error("El descuento no puede ser negativo");
+            throw new NotFoundException("El descuento no puede ser negativo");
+        }
 
         BigDecimal impuesto = subTotal.multiply(BigDecimal.valueOf(0.19));
 
@@ -186,6 +349,11 @@ public class VentasServices {
         BigDecimal montoPagado = venta.getMontoPagado() != null
                 ? venta.getMontoPagado()
                 : BigDecimal.ZERO;
+
+        if (montoPagado.compareTo(total) < 0) {
+            log.error("El monto pagado es insuficiente para la venta");
+            throw new NotFoundException("El monto pagado es insuficiente para la venta");
+        }
 
         BigDecimal vuelto = montoPagado.subtract(total);
 
@@ -202,6 +370,17 @@ public class VentasServices {
     }
 
     public void eliminar(Long id) {
+
+        if (id == null) {
+            log.error("El id de la venta no puede ser nulo");
+            throw new NotFoundException("El id de la venta no puede ser nulo");
+        }
+
+        if (id <= 0) {
+            log.error("El id de la venta debe ser mayor a cero");
+            throw new NotFoundException("El id de la venta debe ser mayor a cero");
+        }
+
         log.info("Eliminando venta con ID: {}", id);
 
         VentasModel venta = ventasRepository.findById(id)
@@ -216,11 +395,23 @@ public class VentasServices {
     }
 
     private VentasResponse toResponse(VentasModel venta) {
-        List<DetalleVentaResponse> detalles =
-                detalleVentaClient.obtenerDetallesPorVenta(venta.getIdVenta());
 
-        // Obtener cliente si existe
+        if (venta == null) {
+            log.error("La venta no puede ser nula");
+            throw new NotFoundException("La venta no puede ser nula");
+        }
+
+        List<DetalleVentaResponse> detalles;
+
+        try {
+            detalles = detalleVentaClient.obtenerDetallesPorVenta(venta.getIdVenta());
+        } catch (Exception e) {
+            log.error("Error al obtener detalles de la venta con ID: {}", venta.getIdVenta());
+            detalles = List.of();
+        }
+
         ClienteResponse cliente = null;
+
         if (venta.getClienteId() != null) {
             try {
                 cliente = clienteClient.obtenerClientePorId(venta.getClienteId());
@@ -229,8 +420,8 @@ public class VentasServices {
             }
         }
 
-        // Obtener empleado si existe
         EmpleadoResponse empleado = null;
+
         if (venta.getEmpleadoId() != null) {
             try {
                 empleado = empleadoClient.obtenerEmpleadoPorId(venta.getEmpleadoId());
@@ -260,5 +451,4 @@ public class VentasServices {
                 .empleado(empleado)
                 .build();
     }
-
 }

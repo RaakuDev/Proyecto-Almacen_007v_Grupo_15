@@ -28,27 +28,119 @@ public class EmpleadoService {
     }
 
     public List<EmpleadoResponse> obtenerTodos() {
-        return empleadoRepository.findAll()
-                .stream()
+
+        log.info("Obteniendo todos los empleados");
+
+        List<EmpleadoModel> empleados = empleadoRepository.findAll();
+
+        if (empleados.isEmpty()) {
+            log.error("No existen empleados registrados");
+            throw new ResourceNotFoundException("No existen empleados registrados");
+        }
+
+        return empleados.stream()
                 .map(this::toResponse)
                 .toList();
     }
 
     public EmpleadoResponse obtenerPorId(Long id) {
+
+        if (id == null) {
+            log.error("El id del empleado no puede ser nulo");
+            throw new ResourceNotFoundException("El id del empleado no puede ser nulo");
+        }
+
+        if (id <= 0) {
+            log.error("El id del empleado debe ser mayor a cero");
+            throw new ResourceNotFoundException("El id del empleado debe ser mayor a cero");
+        }
+
+        log.info("Buscando empleado con id: {}", id);
+
         EmpleadoModel empleado = empleadoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado con id: " + id));
+                .orElseThrow(() -> {
+                    log.error("Empleado no encontrado con id: {}", id);
+                    return new ResourceNotFoundException("Empleado no encontrado con id: " + id);
+                });
 
         return toResponse(empleado);
     }
 
     public EmpleadoResponse obtenerPorUsuarioId(Long usuarioId) {
+
+        if (usuarioId == null) {
+            log.error("El usuarioId del empleado no puede ser nulo");
+            throw new ResourceNotFoundException("El usuarioId del empleado no puede ser nulo");
+        }
+
+        if (usuarioId <= 0) {
+            log.error("El usuarioId del empleado debe ser mayor a cero");
+            throw new ResourceNotFoundException("El usuarioId del empleado debe ser mayor a cero");
+        }
+
+        log.info("Buscando empleado con usuarioId: {}", usuarioId);
+
         EmpleadoModel empleado = empleadoRepository.findByUsuarioId(usuarioId)
-                .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado con usuarioId: " + usuarioId));
+                .orElseThrow(() -> {
+                    log.error("Empleado no encontrado con usuarioId: {}", usuarioId);
+                    return new ResourceNotFoundException("Empleado no encontrado con usuarioId: " + usuarioId);
+                });
 
         return toResponse(empleado);
     }
 
     public EmpleadoResponse crearEmpleado(EmpleadoRequest request) {
+
+        if (request == null) {
+            log.error("Los datos del empleado no pueden ser nulos");
+            throw new ResourceNotFoundException("Los datos del empleado no pueden ser nulos");
+        }
+
+        if (request.getNombre() == null || request.getNombre().trim().isEmpty()) {
+            log.error("El nombre del empleado es obligatorio");
+            throw new ResourceNotFoundException("El nombre del empleado es obligatorio");
+        }
+
+        if (request.getRut() == null || request.getRut().trim().isEmpty()) {
+            log.error("El rut del empleado es obligatorio");
+            throw new ResourceNotFoundException("El rut del empleado es obligatorio");
+        }
+
+        if (request.getCargo() == null || request.getCargo().trim().isEmpty()) {
+            log.error("El cargo del empleado es obligatorio");
+            throw new ResourceNotFoundException("El cargo del empleado es obligatorio");
+        }
+
+        if (request.getTurno() == null || request.getTurno().trim().isEmpty()) {
+            log.error("El turno del empleado es obligatorio");
+            throw new ResourceNotFoundException("El turno del empleado es obligatorio");
+        }
+
+        if (request.getTelefono() == null || request.getTelefono().trim().isEmpty()) {
+            log.error("El teléfono del empleado es obligatorio");
+            throw new ResourceNotFoundException("El teléfono del empleado es obligatorio");
+        }
+
+        if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
+            log.error("El email del empleado es obligatorio");
+            throw new ResourceNotFoundException("El email del empleado es obligatorio");
+        }
+
+        if (request.getFechaInicioContrato() == null) {
+            log.error("La fecha de inicio de contrato es obligatoria");
+            throw new ResourceNotFoundException("La fecha de inicio de contrato es obligatoria");
+        }
+
+        if (request.getActivo() == null) {
+            log.error("El estado activo del empleado es obligatorio");
+            throw new ResourceNotFoundException("El estado activo del empleado es obligatorio");
+        }
+
+        if (request.getUsuarioId() != null && request.getUsuarioId() <= 0) {
+            log.error("El usuarioId del empleado debe ser mayor a cero");
+            throw new ResourceNotFoundException("El usuarioId del empleado debe ser mayor a cero");
+        }
+
         EmpleadoModel empleado = EmpleadoModel.builder()
                 .nombre(request.getNombre())
                 .rut(request.getRut())
@@ -69,8 +161,72 @@ public class EmpleadoService {
     }
 
     public EmpleadoResponse actualizarEmpleado(Long id, EmpleadoRequest request) {
+
+        if (id == null) {
+            log.error("El id del empleado no puede ser nulo");
+            throw new ResourceNotFoundException("El id del empleado no puede ser nulo");
+        }
+
+        if (id <= 0) {
+            log.error("El id del empleado debe ser mayor a cero");
+            throw new ResourceNotFoundException("El id del empleado debe ser mayor a cero");
+        }
+
+        if (request == null) {
+            log.error("Los datos del empleado no pueden ser nulos");
+            throw new ResourceNotFoundException("Los datos del empleado no pueden ser nulos");
+        }
+
+        if (request.getNombre() == null || request.getNombre().trim().isEmpty()) {
+            log.error("El nombre del empleado es obligatorio");
+            throw new ResourceNotFoundException("El nombre del empleado es obligatorio");
+        }
+
+        if (request.getRut() == null || request.getRut().trim().isEmpty()) {
+            log.error("El rut del empleado es obligatorio");
+            throw new ResourceNotFoundException("El rut del empleado es obligatorio");
+        }
+
+        if (request.getCargo() == null || request.getCargo().trim().isEmpty()) {
+            log.error("El cargo del empleado es obligatorio");
+            throw new ResourceNotFoundException("El cargo del empleado es obligatorio");
+        }
+
+        if (request.getTurno() == null || request.getTurno().trim().isEmpty()) {
+            log.error("El turno del empleado es obligatorio");
+            throw new ResourceNotFoundException("El turno del empleado es obligatorio");
+        }
+
+        if (request.getTelefono() == null || request.getTelefono().trim().isEmpty()) {
+            log.error("El teléfono del empleado es obligatorio");
+            throw new ResourceNotFoundException("El teléfono del empleado es obligatorio");
+        }
+
+        if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
+            log.error("El email del empleado es obligatorio");
+            throw new ResourceNotFoundException("El email del empleado es obligatorio");
+        }
+
+        if (request.getFechaInicioContrato() == null) {
+            log.error("La fecha de inicio de contrato es obligatoria");
+            throw new ResourceNotFoundException("La fecha de inicio de contrato es obligatoria");
+        }
+
+        if (request.getActivo() == null) {
+            log.error("El estado activo del empleado es obligatorio");
+            throw new ResourceNotFoundException("El estado activo del empleado es obligatorio");
+        }
+
+        if (request.getUsuarioId() != null && request.getUsuarioId() <= 0) {
+            log.error("El usuarioId del empleado debe ser mayor a cero");
+            throw new ResourceNotFoundException("El usuarioId del empleado debe ser mayor a cero");
+        }
+
         EmpleadoModel empleado = empleadoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Empleado no encontrado con id: " + id));
+                .orElseThrow(() -> {
+                    log.error("Empleado no encontrado con id: {}", id);
+                    return new ResourceNotFoundException("Empleado no encontrado con id: " + id);
+                });
 
         empleado.setNombre(request.getNombre());
         empleado.setRut(request.getRut());
@@ -90,7 +246,19 @@ public class EmpleadoService {
     }
 
     public void eliminarEmpleado(Long id) {
+
+        if (id == null) {
+            log.error("El id del empleado no puede ser nulo");
+            throw new ResourceNotFoundException("El id del empleado no puede ser nulo");
+        }
+
+        if (id <= 0) {
+            log.error("El id del empleado debe ser mayor a cero");
+            throw new ResourceNotFoundException("El id del empleado debe ser mayor a cero");
+        }
+
         if (!empleadoRepository.existsById(id)) {
+            log.error("Empleado no encontrado con id: {}", id);
             throw new ResourceNotFoundException("Empleado no encontrado con id: " + id);
         }
 
@@ -100,6 +268,12 @@ public class EmpleadoService {
     }
 
     private EmpleadoResponse toResponse(EmpleadoModel model) {
+
+        if (model == null) {
+            log.error("El empleado no puede ser nulo");
+            throw new ResourceNotFoundException("El empleado no puede ser nulo");
+        }
+
         List<VentaResponse> ventas = obtenerVentasDesdeServicio(model.getId());
 
         return EmpleadoResponse.builder()

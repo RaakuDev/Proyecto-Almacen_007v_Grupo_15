@@ -26,14 +26,31 @@ public class UsuarioService {
     public List<UsuarioResponse> obtenerTodos() {
         log.info("Obteniendo todos los usuarios");
 
-        return usuarioRepository.findAll()
-                .stream()
+        List<UsuarioModel> usuarios = usuarioRepository.findAll();
+
+        if (usuarios.isEmpty()) {
+            log.error("No existen usuarios registrados");
+            throw new NotFoundException("No existen usuarios registrados");
+        }
+
+        return usuarios.stream()
                 .map(this::toResponse)
                 .toList();
     }
 
     // Obtener usuario por ID
     public UsuarioResponse obtenerPorId(Long id) {
+
+        if (id == null) {
+            log.error("El id del usuario no puede ser nulo");
+            throw new NotFoundException("El id del usuario no puede ser nulo");
+        }
+
+        if (id <= 0) {
+            log.error("El id del usuario debe ser mayor a cero");
+            throw new NotFoundException("El id del usuario debe ser mayor a cero");
+        }
+
         log.info("Buscando usuario con id: {}", id);
 
         return usuarioRepository.findById(id)
@@ -46,6 +63,12 @@ public class UsuarioService {
 
     // Obtener usuario por username
     public UsuarioResponse obtenerPorUsername(String username) {
+
+        if (username == null || username.trim().isEmpty()) {
+            log.error("El username no puede ser nulo o vacío");
+            throw new NotFoundException("El username no puede ser nulo o vacío");
+        }
+
         log.info("Buscando usuario con username: {}", username);
 
         return usuarioRepository.findByUsername(username)
@@ -58,6 +81,52 @@ public class UsuarioService {
 
     // Crear usuario
     public UsuarioResponse guardar(UsuarioRequest request) {
+
+        if (request == null) {
+            log.error("Los datos del usuario no pueden ser nulos");
+            throw new NotFoundException("Los datos del usuario no pueden ser nulos");
+        }
+
+        if (request.getUsername() == null || request.getUsername().trim().isEmpty()) {
+            log.error("El username es obligatorio");
+            throw new NotFoundException("El username es obligatorio");
+        }
+
+        if (request.getPassword() == null || request.getPassword().trim().isEmpty()) {
+            log.error("El password es obligatorio");
+            throw new NotFoundException("El password es obligatorio");
+        }
+
+        if (request.getNombre() == null || request.getNombre().trim().isEmpty()) {
+            log.error("El nombre es obligatorio");
+            throw new NotFoundException("El nombre es obligatorio");
+        }
+
+        if (request.getRut() == null || request.getRut().trim().isEmpty()) {
+            log.error("El rut es obligatorio");
+            throw new NotFoundException("El rut es obligatorio");
+        }
+
+        if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
+            log.error("El email es obligatorio");
+            throw new NotFoundException("El email es obligatorio");
+        }
+
+        if (request.getRol() == null || request.getRol().trim().isEmpty()) {
+            log.error("El rol es obligatorio");
+            throw new NotFoundException("El rol es obligatorio");
+        }
+
+        if (request.getTelefono() == null || request.getTelefono().trim().isEmpty()) {
+            log.error("El teléfono es obligatorio");
+            throw new NotFoundException("El teléfono es obligatorio");
+        }
+
+        if (request.getDireccion() == null || request.getDireccion().trim().isEmpty()) {
+            log.error("La dirección es obligatoria");
+            throw new NotFoundException("La dirección es obligatoria");
+        }
+
         log.info("Guardando nuevo usuario: {}", request.getUsername());
 
         Rol rolConvertido = convertirRol(request.getRol());
@@ -83,6 +152,62 @@ public class UsuarioService {
 
     // Actualizar usuario
     public UsuarioResponse actualizar(Long id, UsuarioRequest request) {
+
+        if (id == null) {
+            log.error("El id del usuario no puede ser nulo");
+            throw new NotFoundException("El id del usuario no puede ser nulo");
+        }
+
+        if (id <= 0) {
+            log.error("El id del usuario debe ser mayor a cero");
+            throw new NotFoundException("El id del usuario debe ser mayor a cero");
+        }
+
+        if (request == null) {
+            log.error("Los datos del usuario no pueden ser nulos");
+            throw new NotFoundException("Los datos del usuario no pueden ser nulos");
+        }
+
+        if (request.getUsername() == null || request.getUsername().trim().isEmpty()) {
+            log.error("El username es obligatorio");
+            throw new NotFoundException("El username es obligatorio");
+        }
+
+        if (request.getPassword() == null || request.getPassword().trim().isEmpty()) {
+            log.error("El password es obligatorio");
+            throw new NotFoundException("El password es obligatorio");
+        }
+
+        if (request.getNombre() == null || request.getNombre().trim().isEmpty()) {
+            log.error("El nombre es obligatorio");
+            throw new NotFoundException("El nombre es obligatorio");
+        }
+
+        if (request.getRut() == null || request.getRut().trim().isEmpty()) {
+            log.error("El rut es obligatorio");
+            throw new NotFoundException("El rut es obligatorio");
+        }
+
+        if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
+            log.error("El email es obligatorio");
+            throw new NotFoundException("El email es obligatorio");
+        }
+
+        if (request.getRol() == null || request.getRol().trim().isEmpty()) {
+            log.error("El rol es obligatorio");
+            throw new NotFoundException("El rol es obligatorio");
+        }
+
+        if (request.getTelefono() == null || request.getTelefono().trim().isEmpty()) {
+            log.error("El teléfono es obligatorio");
+            throw new NotFoundException("El teléfono es obligatorio");
+        }
+
+        if (request.getDireccion() == null || request.getDireccion().trim().isEmpty()) {
+            log.error("La dirección es obligatoria");
+            throw new NotFoundException("La dirección es obligatoria");
+        }
+
         log.info("Actualizando usuario con id: {}", id);
 
         UsuarioModel usuario = usuarioRepository.findById(id)
@@ -111,6 +236,17 @@ public class UsuarioService {
 
     // Cambiar estado del usuario
     public UsuarioResponse cambiarEstado(Long id, boolean estado) {
+
+        if (id == null) {
+            log.error("El id del usuario no puede ser nulo");
+            throw new NotFoundException("El id del usuario no puede ser nulo");
+        }
+
+        if (id <= 0) {
+            log.error("El id del usuario debe ser mayor a cero");
+            throw new NotFoundException("El id del usuario debe ser mayor a cero");
+        }
+
         log.info("Cambiando estado del usuario con id: {} a {}", id, estado);
 
         UsuarioModel usuario = usuarioRepository.findById(id)
@@ -130,6 +266,17 @@ public class UsuarioService {
 
     // Eliminar usuario
     public void eliminar(Long id) {
+
+        if (id == null) {
+            log.error("El id del usuario no puede ser nulo");
+            throw new NotFoundException("El id del usuario no puede ser nulo");
+        }
+
+        if (id <= 0) {
+            log.error("El id del usuario debe ser mayor a cero");
+            throw new NotFoundException("El id del usuario debe ser mayor a cero");
+        }
+
         log.info("Eliminando usuario con id: {}", id);
 
         UsuarioModel usuario = usuarioRepository.findById(id)
@@ -145,16 +292,28 @@ public class UsuarioService {
 
     // Convertir texto a Enum Rol
     private Rol convertirRol(String rol) {
+
+        if (rol == null || rol.trim().isEmpty()) {
+            log.error("El rol no puede ser nulo o vacío");
+            throw new NotFoundException("El rol no puede ser nulo o vacío");
+        }
+
         try {
             return Rol.valueOf(rol.toUpperCase());
         } catch (Exception e) {
             log.error("Rol inválido recibido: {}", rol);
-            throw new RuntimeException("Rol inválido. Debe ser ADMIN, CAJERO o SUPERVISOR");
+            throw new NotFoundException("Rol inválido. Debe ser ADMIN, CAJERO o SUPERVISOR");
         }
     }
 
     // Mapper privado
     private UsuarioResponse toResponse(UsuarioModel usuario) {
+
+        if (usuario == null) {
+            log.error("El usuario no puede ser nulo");
+            throw new NotFoundException("El usuario no puede ser nulo");
+        }
+
         return UsuarioResponse.builder()
                 .id(usuario.getId())
                 .username(usuario.getUsername())

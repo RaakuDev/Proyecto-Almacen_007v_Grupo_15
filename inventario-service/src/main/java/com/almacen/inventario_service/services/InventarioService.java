@@ -26,13 +26,40 @@ public class InventarioService {
 
     public List<InventarioResponse> obtenerTodos() {
         log.info("Obteniendo todo el inventario");
-        return inventarioRepository.findAll()
-                .stream()
+
+        List<InventarioModel> inventarios = inventarioRepository.findAll();
+
+        if (inventarios.isEmpty()) {
+            log.error("No existen registros de inventario");
+            throw new NotFoundException("No existen registros de inventario");
+        }
+
+        return inventarios.stream()
                 .map(this::mapToResponseConProducto)
                 .toList();
     }
 
     public InventarioResponse descontarStock(Long productoId, Integer cantidad) {
+
+        if (productoId == null) {
+            log.error("El id del producto no puede ser nulo");
+            throw new NotFoundException("El id del producto no puede ser nulo");
+        }
+
+        if (productoId <= 0) {
+            log.error("El id del producto debe ser mayor a cero");
+            throw new NotFoundException("El id del producto debe ser mayor a cero");
+        }
+
+        if (cantidad == null) {
+            log.error("La cantidad no puede ser nula");
+            throw new NotFoundException("La cantidad no puede ser nula");
+        }
+
+        if (cantidad <= 0) {
+            log.error("La cantidad debe ser mayor a cero");
+            throw new NotFoundException("La cantidad debe ser mayor a cero");
+        }
 
         log.info("Descontando stock del producto ID: {}", productoId);
 
@@ -40,19 +67,13 @@ public class InventarioService {
                 .orElseThrow(() -> new NotFoundException(
                         "No existe inventario para el producto ID: " + productoId));
 
-        if (cantidad <= 0) {
-            throw new IllegalArgumentException(
-                    "La cantidad debe ser mayor a 0");
-        }
-
         if (inventario.getStockActual() < cantidad) {
-            throw new IllegalArgumentException(
-                    "Stock insuficiente. Stock actual: "
-                            + inventario.getStockActual());
+            log.error("Stock insuficiente. Stock actual: {}", inventario.getStockActual());
+            throw new NotFoundException(
+                    "Stock insuficiente. Stock actual: " + inventario.getStockActual());
         }
 
-        inventario.setStockActual(
-                inventario.getStockActual() - cantidad);
+        inventario.setStockActual(inventario.getStockActual() - cantidad);
 
         InventarioModel actualizado = inventarioRepository.save(inventario);
 
@@ -62,38 +83,116 @@ public class InventarioService {
     }
 
     public InventarioResponse obtenerPorProductoId(Long productoId) {
+
+        if (productoId == null) {
+            log.error("El id del producto no puede ser nulo");
+            throw new NotFoundException("El id del producto no puede ser nulo");
+        }
+
+        if (productoId <= 0) {
+            log.error("El id del producto debe ser mayor a cero");
+            throw new NotFoundException("El id del producto debe ser mayor a cero");
+        }
+
         log.info("Buscando inventario para producto con id: {}", productoId);
 
         InventarioModel inventario = inventarioRepository.findByProductoId(productoId)
-                .orElseThrow(() -> new NotFoundException("No existe inventario para el producto con id " + productoId));
+                .orElseThrow(() -> new NotFoundException(
+                        "No existe inventario para el producto con id " + productoId));
 
         return mapToResponseConProducto(inventario);
     }
 
     public InventarioResponse obtenerPorId(Long id) {
+
+        if (id == null) {
+            log.error("El id del inventario no puede ser nulo");
+            throw new NotFoundException("El id del inventario no puede ser nulo");
+        }
+
+        if (id <= 0) {
+            log.error("El id del inventario debe ser mayor a cero");
+            throw new NotFoundException("El id del inventario debe ser mayor a cero");
+        }
+
         log.info("Buscando inventario con id: {}", id);
 
         InventarioModel inventario = inventarioRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("No existe el inventario con id: " + id));
+                .orElseThrow(() -> new NotFoundException(
+                        "No existe el inventario con id: " + id));
 
         return mapToResponseConProducto(inventario);
     }
 
     public List<InventarioResponse> obtenerPorCategoria(Long categoriaId) {
+
+        if (categoriaId == null) {
+            log.error("El id de la categoría no puede ser nulo");
+            throw new NotFoundException("El id de la categoría no puede ser nulo");
+        }
+
+        if (categoriaId <= 0) {
+            log.error("El id de la categoría debe ser mayor a cero");
+            throw new NotFoundException("El id de la categoría debe ser mayor a cero");
+        }
+
         log.info("Buscando inventario por categoría con id: {}", categoriaId);
 
         List<ProductoResponse> productos = productoClient.obtenerProductosPorCategoria(categoriaId);
 
-        return productos.stream()
+        if (productos == null || productos.isEmpty()) {
+            log.error("No existen productos para la categoría con id: {}", categoriaId);
+            throw new NotFoundException("No existen productos para la categoría con id: " + categoriaId);
+        }
+
+        List<InventarioResponse> inventarios = productos.stream()
                 .map(producto -> inventarioRepository
                         .findByProductoId(producto.getId())
                         .map(inventario -> mapToResponse(inventario, producto))
                         .orElse(null))
                 .filter(inventario -> inventario != null)
                 .toList();
+
+        if (inventarios.isEmpty()) {
+            log.error("No existen inventarios para la categoría con id: {}", categoriaId);
+            throw new NotFoundException("No existen inventarios para la categoría con id: " + categoriaId);
+        }
+
+        return inventarios;
     }
 
     public InventarioResponse guardar(InventarioRequest request) {
+
+        if (request == null) {
+            log.error("Los datos del inventario no pueden ser nulos");
+            throw new NotFoundException("Los datos del inventario no pueden ser nulos");
+        }
+
+        if (request.getProductoId() == null || request.getProductoId() <= 0) {
+            log.error("El id del producto es obligatorio y debe ser mayor a cero");
+            throw new NotFoundException("El id del producto es obligatorio y debe ser mayor a cero");
+        }
+
+        if (request.getStockActual() == null) {
+            log.error("El stock actual no puede ser nulo");
+            throw new NotFoundException("El stock actual no puede ser nulo");
+        }
+
+        if (request.getStockActual() < 0) {
+            log.error("El stock actual no puede ser menor a cero");
+            throw new NotFoundException("El stock actual no puede ser menor a cero");
+        }
+
+        if (request.getStockMinimo() == null) {
+            log.error("El stock mínimo no puede ser nulo");
+            throw new NotFoundException("El stock mínimo no puede ser nulo");
+        }
+
+        if (request.getStockMinimo() < 0) {
+            log.error("El stock mínimo no puede ser menor a cero");
+            throw new NotFoundException("El stock mínimo no puede ser menor a cero");
+        }
+
         log.info("Guardando nuevo inventario para producto id: {}", request.getProductoId());
 
         ProductoResponse producto = obtenerProductoDesdeServicio(request.getProductoId());
@@ -111,6 +210,47 @@ public class InventarioService {
     }
 
     public InventarioResponse actualizar(Long id, InventarioRequest request) {
+
+        if (id == null) {
+            log.error("El id del inventario no puede ser nulo");
+            throw new NotFoundException("El id del inventario no puede ser nulo");
+        }
+
+        if (id <= 0) {
+            log.error("El id del inventario debe ser mayor a cero");
+            throw new NotFoundException("El id del inventario debe ser mayor a cero");
+        }
+
+        if (request == null) {
+            log.error("Los datos del inventario no pueden ser nulos");
+            throw new NotFoundException("Los datos del inventario no pueden ser nulos");
+        }
+
+        if (request.getProductoId() == null || request.getProductoId() <= 0) {
+            log.error("El id del producto es obligatorio y debe ser mayor a cero");
+            throw new NotFoundException("El id del producto es obligatorio y debe ser mayor a cero");
+        }
+
+        if (request.getStockActual() == null) {
+            log.error("El stock actual no puede ser nulo");
+            throw new NotFoundException("El stock actual no puede ser nulo");
+        }
+
+        if (request.getStockActual() < 0) {
+            log.error("El stock actual no puede ser menor a cero");
+            throw new NotFoundException("El stock actual no puede ser menor a cero");
+        }
+
+        if (request.getStockMinimo() == null) {
+            log.error("El stock mínimo no puede ser nulo");
+            throw new NotFoundException("El stock mínimo no puede ser nulo");
+        }
+
+        if (request.getStockMinimo() < 0) {
+            log.error("El stock mínimo no puede ser menor a cero");
+            throw new NotFoundException("El stock mínimo no puede ser menor a cero");
+        }
+
         log.info("Actualizando inventario con id: {}", id);
 
         InventarioModel inventario = inventarioRepository.findById(id)
@@ -134,32 +274,58 @@ public class InventarioService {
 
     public InventarioResponse aumentarStock(Long productoId, Integer cantidad) {
 
+        if (productoId == null) {
+            log.error("El id del producto no puede ser nulo");
+            throw new NotFoundException("El id del producto no puede ser nulo");
+        }
+
+        if (productoId <= 0) {
+            log.error("El id del producto debe ser mayor a cero");
+            throw new NotFoundException("El id del producto debe ser mayor a cero");
+        }
+
+        if (cantidad == null) {
+            log.error("La cantidad no puede ser nula");
+            throw new NotFoundException("La cantidad no puede ser nula");
+        }
+
+        if (cantidad <= 0) {
+            log.error("La cantidad debe ser mayor a cero");
+            throw new NotFoundException("La cantidad debe ser mayor a cero");
+        }
+
         log.info("Aumentando stock del producto ID: {} en cantidad: {}",
                 productoId, cantidad);
 
         InventarioModel inventario = inventarioRepository
                 .findByProductoId(productoId)
                 .orElseThrow(() -> {
-                    log.error("No existe inventario para producto ID: {}",
-                            productoId);
-
+                    log.error("No existe inventario para producto ID: {}", productoId);
                     return new NotFoundException(
-                            "No existe inventario para producto ID: "
-                                    + productoId);
+                            "No existe inventario para producto ID: " + productoId);
                 });
 
-        inventario.setStockActual(
-                inventario.getStockActual() + cantidad);
+        inventario.setStockActual(inventario.getStockActual() + cantidad);
 
         InventarioModel actualizado = inventarioRepository.save(inventario);
 
-        log.info("Stock aumentado correctamente para producto ID: {}",
-                productoId);
+        log.info("Stock aumentado correctamente para producto ID: {}", productoId);
 
         return mapToResponseConProducto(actualizado);
     }
 
     public void eliminar(Long id) {
+
+        if (id == null) {
+            log.error("El id del inventario no puede ser nulo");
+            throw new NotFoundException("El id del inventario no puede ser nulo");
+        }
+
+        if (id <= 0) {
+            log.error("El id del inventario debe ser mayor a cero");
+            throw new NotFoundException("El id del inventario debe ser mayor a cero");
+        }
+
         InventarioModel inventario = inventarioRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("No existe el inventario con id: {}", id);
@@ -174,11 +340,18 @@ public class InventarioService {
     public List<InventarioResponse> obtenerBajoStock() {
         log.info("Obteniendo productos de bajo stock");
 
-        return inventarioRepository.findAll()
+        List<InventarioResponse> inventarios = inventarioRepository.findAll()
                 .stream()
                 .filter(inv -> inv.getStockActual() < inv.getStockMinimo())
                 .map(this::mapToResponseConProducto)
                 .toList();
+
+        if (inventarios.isEmpty()) {
+            log.error("No existen productos con bajo stock");
+            throw new NotFoundException("No existen productos con bajo stock");
+        }
+
+        return inventarios;
     }
 
     private ProductoResponse obtenerProductoDesdeServicio(Long productoId) {
@@ -196,6 +369,17 @@ public class InventarioService {
     }
 
     private InventarioResponse mapToResponse(InventarioModel inventario, ProductoResponse producto) {
+
+        if (inventario == null) {
+            log.error("El inventario no puede ser nulo");
+            throw new NotFoundException("El inventario no puede ser nulo");
+        }
+
+        if (producto == null) {
+            log.error("El producto no puede ser nulo");
+            throw new NotFoundException("El producto no puede ser nulo");
+        }
+
         return InventarioResponse.builder()
                 .id(inventario.getId())
                 .stockActual(inventario.getStockActual())
