@@ -29,13 +29,30 @@ public class ClientesService {
     public List<ClientesResponse> obtenerTodos() {
         log.info("Obteniendo todos los clientes");
 
-        return clientesRepository.findAll()
-                .stream()
+        List<ClientesModel> clientes = clientesRepository.findAll();
+
+        if (clientes.isEmpty()) {
+            log.error("No existen clientes registrados");
+            throw new NotFoundException("No existen clientes registrados");
+        }
+
+        return clientes.stream()
                 .map(this::toResponse)
                 .toList();
     }
 
     public ClientesResponse obtenerPorId(Long id) {
+
+        if (id == null) {
+            log.error("El id del cliente no puede ser nulo");
+            throw new NotFoundException("El id del cliente no puede ser nulo");
+        }
+
+        if (id <= 0) {
+            log.error("El id del cliente debe ser mayor a cero");
+            throw new NotFoundException("El id del cliente debe ser mayor a cero");
+        }
+
         log.info("Buscando cliente con ID: {}", id);
 
         return clientesRepository.findById(id)
@@ -47,6 +64,17 @@ public class ClientesService {
     }
 
     public List<PedidoResponse> obtenerPedidosDelCliente(Long clienteId) {
+
+        if (clienteId == null) {
+            log.error("El id del cliente no puede ser nulo");
+            throw new NotFoundException("El id del cliente no puede ser nulo");
+        }
+
+        if (clienteId <= 0) {
+            log.error("El id del cliente debe ser mayor a cero");
+            throw new NotFoundException("El id del cliente debe ser mayor a cero");
+        }
+
         log.info("Buscando pedidos del cliente con ID: {}", clienteId);
 
         clientesRepository.findById(clienteId)
@@ -55,10 +83,48 @@ public class ClientesService {
                     return new NotFoundException("No existe el cliente con id: " + clienteId);
                 });
 
-        return pedidoClient.obtenerPedidosPorCliente(clienteId);
+        List<PedidoResponse> pedidos = pedidoClient.obtenerPedidosPorCliente(clienteId);
+
+        if (pedidos == null || pedidos.isEmpty()) {
+            log.error("El cliente con ID {} no tiene pedidos registrados", clienteId);
+            throw new NotFoundException("El cliente no tiene pedidos registrados");
+        }
+
+        return pedidos;
     }
 
     public ClientesResponse guardar(ClientesRequest request) {
+
+        if (request == null) {
+            log.error("Los datos del cliente no pueden ser nulos");
+            throw new NotFoundException("Los datos del cliente no pueden ser nulos");
+        }
+
+        if (request.getNombre() == null || request.getNombre().trim().isEmpty()) {
+            log.error("El nombre del cliente es obligatorio");
+            throw new NotFoundException("El nombre del cliente es obligatorio");
+        }
+
+        if (request.getRut() == null || request.getRut().trim().isEmpty()) {
+            log.error("El rut del cliente es obligatorio");
+            throw new NotFoundException("El rut del cliente es obligatorio");
+        }
+
+        if (request.getDireccion() == null || request.getDireccion().trim().isEmpty()) {
+            log.error("La dirección del cliente es obligatoria");
+            throw new NotFoundException("La dirección del cliente es obligatoria");
+        }
+
+        if (request.getTelefono() == null || request.getTelefono().trim().isEmpty()) {
+            log.error("El teléfono del cliente es obligatorio");
+            throw new NotFoundException("El teléfono del cliente es obligatorio");
+        }
+
+        if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
+            log.error("El email del cliente es obligatorio");
+            throw new NotFoundException("El email del cliente es obligatorio");
+        }
+
         log.info("Guardando nuevo cliente con rut: {}", request.getRut());
 
         ClientesModel cliente = new ClientesModel();
@@ -77,6 +143,47 @@ public class ClientesService {
     }
 
     public ClientesResponse actualizar(Long id, ClientesRequest request) {
+
+        if (id == null) {
+            log.error("El id del cliente no puede ser nulo");
+            throw new NotFoundException("El id del cliente no puede ser nulo");
+        }
+
+        if (id <= 0) {
+            log.error("El id del cliente debe ser mayor a cero");
+            throw new NotFoundException("El id del cliente debe ser mayor a cero");
+        }
+
+        if (request == null) {
+            log.error("Los datos del cliente no pueden ser nulos");
+            throw new NotFoundException("Los datos del cliente no pueden ser nulos");
+        }
+
+        if (request.getNombre() == null || request.getNombre().trim().isEmpty()) {
+            log.error("El nombre del cliente es obligatorio");
+            throw new NotFoundException("El nombre del cliente es obligatorio");
+        }
+
+        if (request.getRut() == null || request.getRut().trim().isEmpty()) {
+            log.error("El rut del cliente es obligatorio");
+            throw new NotFoundException("El rut del cliente es obligatorio");
+        }
+
+        if (request.getDireccion() == null || request.getDireccion().trim().isEmpty()) {
+            log.error("La dirección del cliente es obligatoria");
+            throw new NotFoundException("La dirección del cliente es obligatoria");
+        }
+
+        if (request.getTelefono() == null || request.getTelefono().trim().isEmpty()) {
+            log.error("El teléfono del cliente es obligatorio");
+            throw new NotFoundException("El teléfono del cliente es obligatorio");
+        }
+
+        if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
+            log.error("El email del cliente es obligatorio");
+            throw new NotFoundException("El email del cliente es obligatorio");
+        }
+
         log.info("Actualizando cliente con ID: {}", id);
 
         ClientesModel cliente = clientesRepository.findById(id)
@@ -99,6 +206,17 @@ public class ClientesService {
     }
 
     public void eliminar(Long id) {
+
+        if (id == null) {
+            log.error("El id del cliente no puede ser nulo");
+            throw new NotFoundException("El id del cliente no puede ser nulo");
+        }
+
+        if (id <= 0) {
+            log.error("El id del cliente debe ser mayor a cero");
+            throw new NotFoundException("El id del cliente debe ser mayor a cero");
+        }
+
         log.info("Eliminando cliente con ID: {}", id);
 
         ClientesModel cliente = clientesRepository.findById(id)
@@ -113,6 +231,12 @@ public class ClientesService {
     }
 
     private ClientesResponse toResponse(ClientesModel cliente) {
+
+        if (cliente == null) {
+            log.error("El cliente no puede ser nulo");
+            throw new NotFoundException("El cliente no puede ser nulo");
+        }
+
         return ClientesResponse.builder()
                 .id(cliente.getId())
                 .nombre(cliente.getNombre())
