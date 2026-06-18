@@ -2,6 +2,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "UsuariosServiceApplication",
+            "request": "launch",
+            "mainClass": "com.almacen.usuarios.UsuariosServiceApplication",
+            "projectName": "usuarios-service"
+        },
+        {
+            "type": "java",
             "name": "Spring Boot-CategoriasServiceApplication<categorias-service>",
             "request": "launch",
             "cwd": "${workspaceFolder}",
